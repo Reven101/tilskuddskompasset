@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Om Tilskuddskompasset</title>
+<meta name="description" content="Hvem står bak Tilskuddskompasset, hvor kommer dataene fra, og hva bør du vite før du bruker tallene?">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2EDE0;--ink:#27332D;--spruce:#1F4E45;
+  --rose:#D9A199;--mustard:#D9A441;--card:#FBF8F0;--line:#C9C0AC;
+  --shadow:rgba(31,78,69,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+body{background:var(--paper);color:var(--ink);font-family:'Jost',sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--spruce);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+a:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
+
+/* ===== HEADER (samme som hovedsiden) ===== */
+header{text-align:center;padding:44px 20px 28px;border-bottom:3px double var(--spruce);max-width:900px;margin:0 auto}
+.kompass-ikon{display:inline-block;width:52px;height:52px;border:2.5px solid var(--spruce);border-radius:50%;position:relative;margin-bottom:10px;background:var(--card);box-shadow:0 2px 8px var(--shadow)}
+.kompass-ikon::before{content:"";position:absolute;left:50%;top:50%;width:2.5px;height:19px;background:var(--mustard);transform:translate(-50%,-100%) rotate(28deg);transform-origin:bottom center}
+.kompass-ikon::after{content:"";position:absolute;left:50%;top:50%;width:2.5px;height:13px;background:var(--rose);transform:translate(-50%,0) rotate(28deg);transform-origin:top center}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--spruce)}
+h1{font-size:clamp(1.9rem,6vw,2.9rem);font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--spruce);margin:.25em 0 .2em}
+.pitch{font-size:1.02rem;max-width:50ch;margin:0 auto;color:#46514A}
+
+/* ===== TILBAKE-LENKE ===== */
+.tilbake-wrap{max-width:900px;margin:18px auto 0;padding:0 20px;text-align:center}
+.knapp{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.03em;padding:8px 14px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);text-decoration:none;display:inline-block;border-radius:2px;transition:transform .1s}
+.knapp:hover{transform:translateY(-1px);text-decoration:none}
+
+/* ===== INNHOLD ===== */
+.om{max-width:640px;margin:8px auto 50px;padding:0 20px}
+.om section{margin-top:30px}
+.om h2{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--spruce);border-bottom:1px solid var(--line);padding-bottom:7px;margin-bottom:10px}
+.om p{font-size:.92rem;line-height:1.7;color:#3A453E;margin-bottom:10px}
+.om p:last-child{margin-bottom:0}
+.om strong{color:var(--spruce)}
+.om .sist-oppdatert{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:#6B756D;margin-top:14px}
+
+/* ===== FOOTER (samme som hovedsiden) ===== */
+footer{border-top:3px double var(--spruce);max-width:900px;margin:0 auto;padding:24px 20px 48px;text-align:center;font-size:.8rem;color:#5A655D}
+footer .mono{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.1em;margin-top:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kompass-ikon" aria-hidden="true"></div>
+  <p class="eyebrow">Om tjenesten</p>
+  <h1>Tilskudds&shy;kompasset</h1>
+  <p class="pitch">Et gratis oppslagsverk for frivillige organisasjoner, bygget på åpne data.</p>
+</header>
+
+<div class="tilbake-wrap">
+  <a class="knapp" href="/">← Tilbake til ordningene</a>
+</div>
+
+<main class="om">
+
+  <section>
+    <h2>Hva er Tilskuddskompasset?</h2>
+    <p>Tilskuddskompasset samler statlige tilskuddsordninger for frivillige organisasjoner på ett sted: hva ordningene heter, hvem som forvalter dem, når fristene går ut, hvor stor sjansen er for å få napp (innvilgelsesgrad), hva som er typisk tildeling, og hvem som har fått tilskudd tidligere.</p>
+    <p>Målet er enkelt: å gjøre et uoversiktlig felt litt mer oversiktlig, slik at færre gode prosjekter går glipp av midler bare fordi ingen visste at ordningen fantes.</p>
+  </section>
+
+  <section>
+    <h2>Hvem står bak?</h2>
+    <p>Tilskuddskompasset er laget og drives av <strong>Impromptu Analytics</strong>, et enkeltpersonforetak. Tjenesten er et privat, uavhengig initiativ – ikke en del av noen offentlig forvalters tilbud.</p>
+    <p>Den er likevel helt avhengig av at forvaltere selv publiserer dataene sine åpent, noe de i økende grad gjør. Stor takk til dem for det.</p>
+    <!--
+      Valgfri linje, avklar med leder før publisering:
+      <p>Til orientering: personen bak dette er også ansatt i offentlig forvaltning på tilskuddsfeltet.
+      Tilskuddskompasset er et privat sideprosjekt, basert utelukkende på åpent tilgjengelige data, og er
+      ikke tilknyttet arbeidsgivers virksomhet.</p>
+    -->
+  </section>
+
+  <section>
+    <h2>Hvor kommer tallene fra?</h2>
+    <p>Datagrunnlaget er hentet fra åpne data på <a href="https://tilskudd.lottstift.no" target="_blank" rel="noopener">tilskudd.no</a>, Lotteri- og stiftelsestilsynets register over statlige tilskudd til frivillige organisasjoner<!-- , samt Kulturrådets egne åpne data om kulturordningene -->.</p>
+    <p>Tall for innvilgelsesgrad, typisk tildeling, konkurranse og mottakere er basert på siste rapporterte budsjettår for hver ordning.</p>
+    <p class="sist-oppdatert">Sist oppdatert: <!-- SETT INN DATO -->[dato]</p>
+  </section>
+
+  <section>
+    <h2>Viktig å vite</h2>
+    <p>Tallene i Tilskuddskompasset er historiske – de sier noe om hvordan det har gått tidligere, ikke en garanti for hvordan det går for deg. Regelverk, budsjetter og prioriteringer endrer seg fra år til år.</p>
+    <p>Sjekk alltid den offisielle ordningssiden og gjeldende regelverk før du søker, og bruk tallene her som bakgrunnskunnskap – ikke som siste ord.</p>
+  </section>
+
+  <section>
+    <h2>Tips, feil eller spørsmål?</h2>
+    <p>Tilskuddskompasset er under stadig utvikling, og datasettet vokser. Har du funnet en feil, mangler en ordning du vet om, eller har andre innspill? Send en e-post til <a href="mailto:post@impromptu.no">post@impromptu.no</a> – alle tilbakemeldinger blir lest.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p><strong>Tilskuddskompasset</strong> bygger på åpne data fra <a href="https://tilskudd.lottstift.no">tilskudd.no</a> (Lotteri- og stiftelsestilsynet). Viser tildelinger fra siste rapporterte budsjettår. Sjekk alltid den offisielle ordningssiden før dere søker.</p>
+  <p class="mono">EN TJENESTE FRA IMPROMPTU ANALYTICS &middot; IMPROMPTU.NO</p>
+</footer>
+
+</body>
+</html>

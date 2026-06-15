@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tilskuddskompasset – finn ordningene, se sjansen, rekk fristen</title>
+<meta name="description" content="Finn tilskuddsordningene dere kan søke, se hvem som får, og rekk fristen. Bygget på åpne data fra tilskudd.no.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2EDE0;--ink:#27332D;--spruce:#1F4E45;
+  --rose:#D9A199;--mustard:#D9A441;--card:#FBF8F0;--line:#C9C0AC;
+  --success:#2D7A4F;--warning:#B85C1F;--danger:#A63D2F;
+  --shadow:rgba(31,78,69,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+body{background:var(--paper);color:var(--ink);font-family:'Jost',sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--spruce);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
+
+/* ===== HEADER ===== */
+header{text-align:center;padding:44px 20px 28px;border-bottom:3px double var(--spruce);max-width:900px;margin:0 auto}
+.kompass-ikon{display:inline-block;width:52px;height:52px;border:2.5px solid var(--spruce);border-radius:50%;position:relative;margin-bottom:10px;background:var(--card);box-shadow:0 2px 8px var(--shadow)}
+.kompass-ikon::before{content:"";position:absolute;left:50%;top:50%;width:2.5px;height:19px;background:var(--mustard);transform:translate(-50%,-100%) rotate(28deg);transform-origin:bottom center}
+.kompass-ikon::after{content:"";position:absolute;left:50%;top:50%;width:2.5px;height:13px;background:var(--rose);transform:translate(-50%,0) rotate(28deg);transform-origin:top center}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--spruce)}
+h1{font-size:clamp(1.9rem,6vw,2.9rem);font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--spruce);margin:.25em 0 .2em}
+.pitch{font-size:1.02rem;max-width:50ch;margin:0 auto;color:#46514A}
+.pitch strong{color:var(--spruce)}
+
+/* ===== NØKKELTALL ===== */
+.nokkeltall{max-width:900px;margin:18px auto 0;padding:0 20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.nk{text-align:center;padding:9px 16px;border:1px solid var(--line);background:var(--card);border-radius:3px}
+.nk .verdi{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.3rem;color:var(--spruce)}
+.nk .etikett{font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:#6B756D;margin-top:2px}
+
+/* ===== KONTROLLER ===== */
+.controls{max-width:900px;margin:20px auto 6px;padding:0 20px;display:flex;flex-direction:column;gap:11px;align-items:center}
+.search{width:100%;max-width:520px;font-family:'IBM Plex Mono',monospace;font-size:.9rem;padding:11px 16px;border:2px solid var(--spruce);background:var(--card);color:var(--ink);text-align:center;transition:border-color .2s}
+.search:focus{border-color:var(--mustard)}
+.search::placeholder{color:#8A9089}
+.filterrow{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-items:center}
+.chip{font-weight:500;font-size:.74rem;letter-spacing:.04em;text-transform:uppercase;padding:5px 13px;border:1.5px solid var(--spruce);background:var(--card);color:var(--spruce);cursor:pointer;border-radius:999px;transition:all .15s}
+.chip:hover{background:rgba(31,78,69,.06)}
+.chip.active{background:var(--spruce);color:var(--card)}
+select{font-family:'IBM Plex Mono',monospace;font-size:.74rem;padding:6px 11px;border:1.5px solid var(--spruce);background:var(--card);color:var(--ink);border-radius:3px;cursor:pointer}
+.sortrow{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;align-items:center}
+.sortrow label{font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:#6B756D}
+.count{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#6B756D}
+
+/* ===== ORDNINGSLISTE ===== */
+.liste{max-width:900px;margin:14px auto 50px;padding:0 20px}
+.ordning{background:var(--card);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);margin-bottom:13px;transition:box-shadow .15s}
+.ordning:hover{box-shadow:6px 6px 0 var(--shadow)}
+
+.topp{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;width:100%;background:none;border:none;text-align:left;padding:14px 16px;cursor:pointer;font-family:inherit;color:inherit}
+.topp h2{font-size:.97rem;font-weight:600;line-height:1.35}
+.forvalter{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--spruce);margin-top:2px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:.58rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--spruce);color:var(--spruce);padding:2px 7px;border-radius:999px}
+.badge.frist{border-color:var(--ink);background:var(--mustard);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-weight:500}
+.badge.frist.akutt{background:var(--danger);color:white;border-color:var(--danger)}
+.badge.frist.lopende{background:transparent;border-color:var(--success);color:var(--success)}
+.badge.frivillig{border-color:var(--line);color:#6B756D;font-size:.54rem}
+.badge.konkurranse{border-color:var(--warning);color:var(--warning);font-size:.54rem}
+
+.maaler{width:86px;text-align:center;flex-shrink:0}
+.maaler svg{display:block;margin:0 auto}
+.maaler .pst{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.92rem;color:var(--spruce)}
+.maaler .lbl{font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:#6B756D}
+
+/* ===== DETALJ ===== */
+.detalj{display:none;border-top:1.5px solid var(--ink);padding:0 16px 18px}
+.ordning.open .detalj{display:block}
+
+.tabs{display:flex;gap:0;border-bottom:1.5px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;padding:11px 14px 9px;background:none;border:none;cursor:pointer;color:#6B756D;border-bottom:2.5px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--spruce);border-bottom-color:var(--mustard)}
+.tabcontent{display:none}
+.tabcontent.active{display:block}
+
+.felt-tittel{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:#6B756D;margin-bottom:3px;display:block}
+.felt-tekst{font-size:.88rem;line-height:1.6;color:#3A453E;margin-bottom:13px;white-space:pre-line}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px}
+.stat-boks{background:var(--paper);border:1px solid var(--line);padding:9px 10px;border-radius:3px;text-align:center}
+.stat-boks .tall{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.05rem;color:var(--spruce)}
+.stat-boks .hva{font-family:'IBM Plex Mono',monospace;font-size:.52rem;letter-spacing:.09em;text-transform:uppercase;color:#6B756D;margin-top:2px}
+
+/* Sparkline */
+.sparkline-wrap{margin:10px 0 14px}
+.sparkline-label{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;color:#6B756D;margin-bottom:5px}
+.sparkline{display:flex;align-items:flex-end;gap:3px;height:36px}
+.sparkline .bar{background:var(--spruce);border-radius:2px 2px 0 0;flex:1;min-width:10px;position:relative;transition:background .15s}
+.sparkline .bar:hover{background:var(--mustard)}
+.sparkline .bar::after{content:attr(data-label);position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#6B756D;white-space:nowrap}
+.sparkline .bar .tip{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--spruce);white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
+.sparkline .bar:hover .tip{opacity:1}
+
+/* Box plot */
+.boxplot-wrap{margin:10px 0 14px;padding:8px 12px;background:var(--paper);border:1px solid var(--line);border-radius:3px}
+.boxplot-label{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;color:#6B756D;margin-bottom:8px}
+.boxplot{position:relative;height:24px;margin:6px 0}
+.boxplot .whisker{position:absolute;top:50%;height:2px;background:var(--line);transform:translateY(-50%)}
+.boxplot .box{position:absolute;top:2px;height:20px;background:rgba(31,78,69,.15);border:1.5px solid var(--spruce);border-radius:2px}
+.boxplot .median-line{position:absolute;top:0;width:2.5px;height:24px;background:var(--mustard);border-radius:1px}
+.boxplot-labels{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#6B756D}
+
+/* Mottaker-tabell */
+.mottaker-tabell{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:.82rem}
+.mottaker-tabell th{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:#6B756D;text-align:left;padding:6px 8px;border-bottom:1.5px solid var(--line);font-weight:500}
+.mottaker-tabell td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.mottaker-tabell tr:last-child td{border-bottom:none}
+.mottaker-tabell .belop{font-family:'IBM Plex Mono',monospace;font-size:.78rem;white-space:nowrap;color:var(--spruce);font-weight:500}
+.mottaker-tabell .tiltak-tekst{font-size:.76rem;color:#5A655D;margin-top:2px}
+.mottaker-tabell .fylke-tag{font-size:.6rem;color:#6B756D;font-family:'IBM Plex Mono',monospace}
+
+/* Fylkeskart (bar chart) */
+.fylke-bars{margin:8px 0 14px}
+.fylke-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.fylke-bar-row .name{font-family:'IBM Plex Mono',monospace;font-size:.6rem;width:90px;text-align:right;color:#6B756D;flex-shrink:0}
+.fylke-bar-row .bar-outer{flex:1;height:14px;background:var(--paper);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.fylke-bar-row .bar-inner{height:100%;background:var(--spruce);border-radius:1px;transition:width .3s}
+.fylke-bar-row .count{font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--spruce);width:30px;font-weight:500}
+
+/* Handling */
+.handling{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.knapp{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.03em;padding:8px 14px;border:1.5px solid var(--ink);background:var(--mustard);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block;border-radius:2px;transition:transform .1s}
+.knapp:hover{transform:translateY(-1px)}
+.knapp.sekundaer{background:var(--card)}
+.forbehold{font-size:.72rem;font-style:italic;color:#6B756D;margin-top:8px}
+.mangler{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:#8A6A3A;background:#F3E8CE;border:1px dashed var(--mustard);padding:6px 10px;display:inline-block;border-radius:2px}
+
+.tomt{text-align:center;background:var(--card);border:1.5px dashed var(--spruce);padding:30px 20px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--spruce)}
+
+footer{border-top:3px double var(--spruce);max-width:900px;margin:0 auto;padding:24px 20px 48px;text-align:center;font-size:.8rem;color:#5A655D}
+footer .mono{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.1em;margin-top:8px}
+
+@media(max-width:580px){
+  .topp{grid-template-columns:1fr;gap:6px}
+  .maaler{width:auto;display:flex;align-items:center;gap:8px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .nokkeltall{gap:6px}
+  .nk{padding:7px 10px}
+  .nk .verdi{font-size:1.05rem}
+  .tabs{gap:0}
+  .tab{padding:9px 9px 7px;font-size:.6rem}
+  .mottaker-tabell{font-size:.75rem}
+  .fylke-bar-row .name{width:70px;font-size:.54rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kompass-ikon" aria-hidden="true"></div>
+  <p class="eyebrow">Statlige tilskudd til frivillige organisasjoner</p>
+  <h1>Tilskudds&shy;kompasset</h1>
+  <p class="pitch">Finn ordningene dere kan søke, <strong>se hvem som faktisk får – og hvor mye</strong>.</p>
+</header>
+
+<div class="nokkeltall" id="nokkeltall"></div>
+
+<div class="controls">
+  <input type="search" class="search" id="sok" placeholder="Søk: kor, idrett, beredskap, inkludering, Bufdir …" aria-label="Søk i tilskuddsordninger">
+  <div class="filterrow" id="typeChips" role="group" aria-label="Type tilskudd">
+    <button class="chip active" data-v="alle">Alle</button>
+    <button class="chip" data-v="Driftsmidler">Drift</button>
+    <button class="chip" data-v="Prosjektmidler">Prosjekt</button>
+  </div>
+  <div class="filterrow">
+    <select id="depVelger" aria-label="Filtrer på departement"><option value="alle">Alle departementer</option></select>
+    <select id="fristVelger" aria-label="Filtrer på frist">
+      <option value="alle">Alle frister</option>
+      <option value="30">Frist innen 30 dager</option>
+      <option value="90">Frist innen 90 dager</option>
+      <option value="lopende">Løpende frist</option>
+    </select>
+    <select id="fylkeVelger" aria-label="Filtrer på fylke"><option value="alle">Alle fylker</option></select>
+  </div>
+  <div class="sortrow">
+    <label for="sortVelger">Sorter:</label>
+    <select id="sortVelger" aria-label="Sorter ordninger">
+      <option value="frist">Nærmeste frist</option>
+      <option value="grad">Høyest innvilgelse</option>
+      <option value="pott">Størst pott</option>
+      <option value="typisk">Størst typisk tildeling</option>
+      <option value="konkurranse">Lavest konkurranse</option>
+      <option value="navn">Navn A–Å</option>
+    </select>
+  </div>
+  <p class="count" id="teller" aria-live="polite"></p>
+</div>
+
+<main class="liste" id="liste"></main>
+
+<footer>
+  <p><strong>Tilskuddskompasset v4</strong> bygger på åpne data fra <a href="https://tilskudd.lottstift.no">tilskudd.no</a> (Lotteri- og stiftelsestilsynet). Viser tildelinger fra siste rapporterte budsjettår. Sjekk alltid den offisielle ordningssiden før dere søker.</p>
+  <p class="mono">EN TJENESTE FRA IMPROMPTU ANALYTICS &middot; IMPROMPTU.NO</p>
+</footer>
+
+<script src="ordninger_v4.js"></script>
+<script>
+// ===== UTILITIES =====
+const MND=["","jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+const MND_FULL=["","januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
+const fmtKr=n=>n==null?"–":new Intl.NumberFormat("nb-NO",{maximumFractionDigits:0}).format(n)+" kr";
+const fmtKort=n=>{if(n==null)return"–";if(n>=1e6)return(n/1e6).toFixed(1).replace(".0","")+" mill";if(n>=1e3)return Math.round(n/1e3)+"k";return n+"";};
+const escHTML=s=>s?s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"):"";
+const escAttr=s=>s?s.replace(/&/g,"&amp;").replace(/"/g,"&quot;"):"";
+const trunkert=(s,m)=>{if(!s)return"";return s.length<=m?s:s.slice(0,m).replace(/\s\S*$/,"")+" …";};
+
+function parseFrist(f){if(!f)return null;const d=new Date(f+"T00:00:00");return isNaN(d)?null:d;}
+function nesteFrist(frister){
+  if(!frister||!frister.length)return null;
+  const naa=new Date();naa.setHours(0,0,0,0);
+  return frister.map(parseFrist).filter(d=>d&&d>=naa).sort((a,b)=>a-b)[0]||null;
+}
+const dagerTil=d=>{const n=new Date();n.setHours(0,0,0,0);return Math.round((d-n)/864e5);};
+
+// ===== KOMPASSNÅL =====
+function maalerSVG(grad){
+  if(grad==null)return'<span class="lbl">ingen<br>data</span>';
+  const p=Math.min(Math.max(grad,0),1),v=-90+p*180;
+  return`<svg width="62" height="36" viewBox="0 0 64 38" aria-hidden="true">
+    <path d="M4 34 A28 28 0 0 1 60 34" fill="none" stroke="#C9C0AC" stroke-width="6" stroke-linecap="round"/>
+    <path d="M4 34 A28 28 0 0 1 60 34" fill="none" stroke="#1F4E45" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(p*88).toFixed(1)} 88"/>
+    <line x1="32" y1="34" x2="${(32+24*Math.sin(v*Math.PI/180)).toFixed(1)}" y2="${(34-24*Math.cos(v*Math.PI/180)).toFixed(1)}" stroke="#D9A441" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="32" cy="34" r="3" fill="#27332D"/>
+  </svg>`;
+}
+
+// ===== ICS =====
+function lastNedICS(o,d){
+  const pad=n=>String(n).padStart(2,"0");
+  const dato=`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Tilskuddskompasset//NO","BEGIN:VEVENT",
+    `UID:${o.id}@tilskuddskompasset.no`,`DTSTART;VALUE=DATE:${dato}`,
+    `SUMMARY:Søknadsfrist: ${o.tittel}`,
+    `DESCRIPTION:Forvalter: ${o.forvalter}\\nhttps://tilskudd.lottstift.no/ordning/${o.id}`,
+    "BEGIN:VALARM","TRIGGER:-P14D","ACTION:DISPLAY","DESCRIPTION:14 dager til fristen","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
+  a.download=`frist-${o.id}.ics`;a.click();URL.revokeObjectURL(a.href);
+}
+
+// ===== SPARKLINE =====
+function sparkHTML(serie,label){
+  if(!serie||serie.length<2)return"";
+  const vals=serie.map(p=>p.y),mx=Math.max(...vals)||1;
+  const bars=serie.map(p=>`<div class="bar" style="height:${Math.max(3,Math.round(p.y/mx*34))}px" data-label="'${p.x.slice(-2)}"><span class="tip">${fmtKort(p.y)}</span></div>`).join("");
+  return`<div class="sparkline-wrap"><span class="sparkline-label">${label}</span><div class="sparkline" style="padding-bottom:16px">${bars}</div></div>`;
+}
+
+// ===== BOX PLOT =====
+function boxplotHTML(ford){
+  if(!ford)return"";
+  const range=ford.max-ford.min||1;
+  const pct=v=>((v-ford.min)/range*100).toFixed(1);
+  return`<div class="boxplot-wrap">
+    <span class="boxplot-label">Beløpsfordeling (tildelt per mottaker)</span>
+    <div class="boxplot">
+      <div class="whisker" style="left:0;width:100%"></div>
+      <div class="box" style="left:${pct(ford.q1)}%;width:${(pct(ford.q3)-pct(ford.q1)).toFixed(1)}%"></div>
+      <div class="median-line" style="left:${pct(ford.median)}%"></div>
+    </div>
+    <div class="boxplot-labels"><span>${fmtKort(ford.min)}</span><span>median: ${fmtKort(ford.median)}</span><span>${fmtKort(ford.max)}</span></div>
+  </div>`;
+}
+
+// ===== FYLKESKART (horisontale bars) =====
+function fylkerHTML(fylker){
+  if(!fylker||!Object.keys(fylker).length)return"";
+  const entries=Object.entries(fylker).sort((a,b)=>b[1]-a[1]);
+  const maxV=entries[0][1];
+  const rows=entries.slice(0,11).map(([f,n])=>
+    `<div class="fylke-bar-row"><span class="name">${escHTML(f)}</span><div class="bar-outer"><div class="bar-inner" style="width:${(n/maxV*100).toFixed(0)}%"></div></div><span class="count">${n}</span></div>`
+  ).join("");
+  return`<div class="fylke-bars"><span class="felt-tittel">Geografisk fordeling (tildelinger per fylke)</span>${rows}</div>`;
+}
+
+// ===== MOTTAKER-TABELL =====
+function mottakerTabell(topp){
+  if(!topp||!topp.length)return"";
+  const rows=topp.map(m=>
+    `<tr><td><strong>${escHTML(m.n)}</strong>${m.tiltak?`<div class="tiltak-tekst">${escHTML(m.tiltak)}</div>`:""}</td><td class="belop">${fmtKr(m.t)}</td><td class="fylke-tag">${escHTML(m.f||"")}</td></tr>`
+  ).join("");
+  return`<span class="felt-tittel">Hvem fikk tilskudd? (topp mottakere siste år)</span>
+    <table class="mottaker-tabell"><thead><tr><th>Mottaker / tiltak</th><th>Tildelt</th><th>Fylke</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ===== STATE =====
+let valgtType="alle",valgtDep="alle",valgtFrist="alle",valgtFylke="alle",sortering="frist",soketekst="";
+
+// ===== INIT =====
+const deps=[...new Set(ORDNINGER.map(o=>o.dep).filter(Boolean))].sort();
+const depSel=document.getElementById("depVelger");
+deps.forEach(d=>{const op=document.createElement("option");op.value=d;op.textContent=d;depSel.appendChild(op);});
+
+// Fylker fra data
+const alleFylker=new Set();
+ORDNINGER.forEach(o=>{if(o.fylker)Object.keys(o.fylker).forEach(f=>alleFylker.add(f));});
+const fylkeSel=document.getElementById("fylkeVelger");
+[...alleFylker].sort().forEach(f=>{const op=document.createElement("option");op.value=f;op.textContent=f;fylkeSel.appendChild(op);});
+
+// Nøkkeltall
+(function(){
+  const nk=document.getElementById("nokkeltall");
+  const antall=ORDNINGER.length;
+  const totalPott=ORDNINGER.reduce((s,o)=>s+(o.belop||0),0);
+  const medGrad=ORDNINGER.filter(o=>o.grad!=null);
+  const snittGrad=medGrad.length?Math.round(medGrad.reduce((s,o)=>s+o.grad,0)/medGrad.length*100):0;
+  const totalMottakere=ORDNINGER.reduce((s,o)=>s+(o.mottakere_n||0),0);
+  nk.innerHTML=`
+    <div class="nk"><div class="verdi">${antall}</div><div class="etikett">Ordninger</div></div>
+    <div class="nk"><div class="verdi">${fmtKort(totalPott)}</div><div class="etikett">Total ramme</div></div>
+    <div class="nk"><div class="verdi">${snittGrad} %</div><div class="etikett">Snitt innvilgelse</div></div>
+    <div class="nk"><div class="verdi">${totalMottakere.toLocaleString("nb")}</div><div class="etikett">Mottakere i år</div></div>
+  `;
+})();
+
+// ===== RENDER =====
+function render(){
+  const liste=document.getElementById("liste");
+  liste.innerHTML="";
+  const q=soketekst.toLowerCase();
+
+  let synlige=ORDNINGER.filter(o=>{
+    if(valgtType!=="alle"&&!(o.typer||[]).includes(valgtType))return false;
+    if(valgtDep!=="alle"&&o.dep!==valgtDep)return false;
+    if(valgtFylke!=="alle"&&(!o.fylker||!o.fylker[valgtFylke]))return false;
+    if(valgtFrist!=="alle"){
+      if(valgtFrist==="lopende"){if(o.fristtype!=="CONTINUOUS")return false;}
+      else{const d=nesteFrist(o.frister);if(!d||dagerTil(d)>parseInt(valgtFrist))return false;}
+    }
+    if(q){
+      const s=(o.tittel+" "+o.forvalter+" "+(o.beskrivelse||"")+" "+(o.hvem||"")+" "+(o.formaal||"")+" "+(o.dep||"")+" "+(o.topp_mottakere||[]).map(m=>m.n+" "+m.tiltak).join(" ")).toLowerCase();
+      if(!s.includes(q))return false;
+    }
+    return true;
+  });
+
+  synlige.sort((a,b)=>{
+    if(sortering==="grad")return(b.grad??-1)-(a.grad??-1);
+    if(sortering==="pott")return(b.belop??-1)-(a.belop??-1);
+    if(sortering==="typisk")return(b.typisk_tildeling??-1)-(a.typisk_tildeling??-1);
+    if(sortering==="konkurranse")return(a.konkurranse??999)-(b.konkurranse??999);
+    if(sortering==="navn")return(a.tittel||"").localeCompare(b.tittel||"","nb");
+    const da=nesteFrist(a.frister),db=nesteFrist(b.frister);
+    if(!da&&!db)return(a.tittel||"").localeCompare(b.tittel||"","nb");
+    if(!da)return 1;if(!db)return-1;return da-db;
+  });
+
+  document.getElementById("teller").textContent=synlige.length+" av "+ORDNINGER.length+" ordninger";
+  if(!synlige.length){liste.innerHTML='<div class="tomt">Ingen ordninger matcher. Prøv et bredere søk.</div>';return;}
+
+  synlige.forEach(o=>{
+    const frist=nesteFrist(o.frister);
+    const art=document.createElement("article");
+    art.className="ordning";
+    art.innerHTML=lagTopp(o,frist)+`<div class="detalj">${lagDetalj(o,frist)}</div>`;
+
+    art.querySelector(".topp").addEventListener("click",()=>{
+      const open=art.classList.toggle("open");
+      art.querySelector(".topp").setAttribute("aria-expanded",open);
+    });
+    art.querySelectorAll(".ics").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();if(frist)lastNedICS(o,frist);}));
+    art.querySelectorAll(".tab").forEach(tab=>{
+      tab.addEventListener("click",e=>{
+        e.stopPropagation();
+        const panel=art.querySelector(".detalj");
+        panel.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+        panel.querySelectorAll(".tabcontent").forEach(tc=>tc.classList.remove("active"));
+        tab.classList.add("active");
+        const target=panel.querySelector(`[data-tab="${tab.dataset.target}"]`);
+        if(target)target.classList.add("active");
+      });
+    });
+    liste.appendChild(art);
+  });
+}
+
+// ===== TOPP =====
+function lagTopp(o,frist){
+  let fristBadge="";
+  if(frist){const dg=dagerTil(frist);fristBadge=`<span class="badge frist ${dg<=14?"akutt":""}">Frist ${frist.getDate()}. ${MND[frist.getMonth()+1]} · ${dg<=0?"i dag":"om "+dg+" d"}</span>`;}
+  else if(o.fristtype==="CONTINUOUS")fristBadge='<span class="badge frist lopende">Løpende</span>';
+  else fristBadge='<span class="badge">Frist: se ordningen</span>';
+
+  const typeBadges=(o.typer||[]).map(t=>`<span class="badge">${t}</span>`).join("");
+  const frivilligBadge=o.krever_frivillig?'<span class="badge frivillig">Frivillighetsreg.</span>':"";
+  const konkurranseBadge=o.konkurranse&&o.konkurranse>3?`<span class="badge konkurranse">${o.konkurranse}x omsøkt</span>`:"";
+
+  return`<button class="topp" aria-expanded="false">
+    <span><h2>${escHTML(o.tittel||"Uten navn")}</h2>
+      <span class="forvalter">${escHTML(o.forvalter||"")}</span>
+      <span class="badges">${typeBadges}${fristBadge}${frivilligBadge}${konkurranseBadge}</span>
+    </span>
+    <span class="maaler">${maalerSVG(o.grad)}${o.grad!=null?`<span class="pst">${Math.round(o.grad*100)}%</span><span class="lbl">får ja</span>`:""}</span>
+  </button>`;
+}
+
+// ===== DETALJ =====
+function lagDetalj(o,frist){
+  return`<div class="tabs">
+      <button class="tab active" data-target="oversikt">Oversikt</button>
+      <button class="tab" data-target="hvem">Hvem fikk?</button>
+      <button class="tab" data-target="statistikk">Statistikk</button>
+      <button class="tab" data-target="krav">Krav</button>
+      <button class="tab" data-target="sok">Søk</button>
+    </div>
+    <div class="tabcontent active" data-tab="oversikt">${tabOversikt(o)}</div>
+    <div class="tabcontent" data-tab="hvem">${tabHvemFikk(o)}</div>
+    <div class="tabcontent" data-tab="statistikk">${tabStatistikk(o)}</div>
+    <div class="tabcontent" data-tab="krav">${tabKrav(o)}</div>
+    <div class="tabcontent" data-tab="sok">${tabSok(o,frist)}</div>`;
+}
+
+function tabOversikt(o){
+  let h="";
+  if(o.beskrivelse)h+=`<span class="felt-tittel">Beskrivelse</span><p class="felt-tekst">${escHTML(o.beskrivelse)}</p>`;
+  if(o.formaal)h+=`<span class="felt-tittel">Mål og formål</span><p class="felt-tekst">${escHTML(trunkert(o.formaal,500))}</p>`;
+  if(o.hvem)h+=`<span class="felt-tittel">Hvem kan søke</span><p class="felt-tekst">${escHTML(trunkert(o.hvem,500))}</p>`;
+  if(o.hva)h+=`<span class="felt-tittel">Hva kan midlene brukes til</span><p class="felt-tekst">${escHTML(trunkert(o.hva,400))}</p>`;
+  return h||'<p class="mangler">Beskrivelse ikke tilgjengelig.</p>';
+}
+
+function tabHvemFikk(o){
+  let h="";
+  h+=mottakerTabell(o.topp_mottakere);
+  if(o.fordeling)h+=boxplotHTML(o.fordeling);
+  h+=fylkerHTML(o.fylker);
+  if(!o.topp_mottakere||!o.topp_mottakere.length)h='<p class="mangler">Ingen tildelingsdata tilgjengelig for denne ordningen.</p>';
+  else h+='<p class="forbehold">Viser tildelinger fra siste budsjettår. Kilde: tilskudd.no.</p>';
+  return h;
+}
+
+function tabStatistikk(o){
+  let h="";
+  const har=o.grad!=null||o.belop;
+  if(har){
+    h+='<div class="stats-grid">';
+    if(o.grad!=null)h+=`<div class="stat-boks"><div class="tall">${Math.round(o.grad*100)}%</div><div class="hva">innvilgelsesgrad</div></div>`;
+    if(o.belop)h+=`<div class="stat-boks"><div class="tall">${fmtKort(o.belop)}</div><div class="hva">budsjettramme</div></div>`;
+    if(o.typisk_tildeling)h+=`<div class="stat-boks"><div class="tall">${fmtKort(o.typisk_tildeling)}</div><div class="hva">typisk tildeling</div></div>`;
+    if(o.mottakere_n)h+=`<div class="stat-boks"><div class="tall">${o.mottakere_n}</div><div class="hva">mottakere</div></div>`;
+    if(o.soekere)h+=`<div class="stat-boks"><div class="tall">${o.soekere}</div><div class="hva">søkere</div></div>`;
+    if(o.konkurranse)h+=`<div class="stat-boks"><div class="tall">${o.konkurranse}x</div><div class="hva">konkurranse</div></div>`;
+    if(o.total_tildelt)h+=`<div class="stat-boks"><div class="tall">${fmtKort(o.total_tildelt)}</div><div class="hva">tildelt totalt</div></div>`;
+    if(o.total_soekt)h+=`<div class="stat-boks"><div class="tall">${fmtKort(o.total_soekt)}</div><div class="hva">omsøkt totalt</div></div>`;
+    h+='</div>';
+  }
+  if(o.ts_tildelt&&o.ts_tildelt.length>1)h+=sparkHTML(o.ts_tildelt,"Tildelt beløp per år");
+  if(o.ts_mottakere&&o.ts_mottakere.length>1)h+=sparkHTML(o.ts_mottakere,"Antall mottakere per år");
+  if(!har&&(!o.ts_tildelt||!o.ts_tildelt.length))return'<p class="mangler">Statistikk ikke rapportert ennå.</p>';
+  h+='<p class="forbehold">Historiske tall fra tilskudd.no – ikke et løfte om utfall.</p>';
+  return h;
+}
+
+function tabKrav(o){
+  let h="";
+  if(o.kriterier)h+=`<span class="felt-tittel">Tildelingskriterier</span><p class="felt-tekst">${escHTML(trunkert(o.kriterier,800))}</p>`;
+  if(o.rapportering)h+=`<span class="felt-tittel">Rapporteringskrav</span><p class="felt-tekst">${escHTML(trunkert(o.rapportering,600))}</p>`;
+  return h||'<p class="mangler">Krav ikke registrert for denne ordningen.</p>';
+}
+
+function tabSok(o,frist){
+  let h="";
+  if(frist){const dg=dagerTil(frist);h+=`<p class="felt-tekst" style="font-size:1rem">Neste frist: <strong>${frist.getDate()}. ${MND_FULL[frist.getMonth()+1]} ${frist.getFullYear()}</strong> – om ${dg} dager.</p>`;}
+  else if(o.fristtype==="CONTINUOUS")h+='<p class="felt-tekst" style="font-size:1rem"><strong>Løpende søknadsfrist</strong>.</p>';
+  if(o.frister&&o.frister.length>1){
+    h+='<span class="felt-tittel">Alle frister</span><p class="felt-tekst">';
+    h+=o.frister.map(f=>{const d=parseFrist(f);return d?`${d.getDate()}. ${MND_FULL[d.getMonth()+1]} ${d.getFullYear()}`:f;}).join(", ")+'</p>';
+  }
+  if(o.hvordan)h+=`<span class="felt-tittel">Slik søker du</span><p class="felt-tekst">${escHTML(trunkert(o.hvordan,500))}</p>`;
+  h+='<div class="handling">';
+  if(frist)h+='<button class="knapp ics">+ Kalender-påminnelse</button>';
+  if(o.soknadslenke)h+=`<a class="knapp" href="${escAttr(o.soknadslenke)}" target="_blank" rel="noopener">Søknadssiden →</a>`;
+  if(o.regelverk)h+=`<a class="knapp sekundaer" href="${escAttr(o.regelverk)}" target="_blank" rel="noopener">Regelverk</a>`;
+  h+=`<a class="knapp sekundaer" href="https://tilskudd.lottstift.no/ordning/${o.id}" target="_blank" rel="noopener">tilskudd.no →</a></div>`;
+  return h;
+}
+
+// ===== EVENTS =====
+document.getElementById("sok").addEventListener("input",e=>{soketekst=e.target.value;render();});
+document.getElementById("typeChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;document.querySelectorAll("#typeChips .chip").forEach(c=>c.classList.remove("active"));b.classList.add("active");valgtType=b.dataset.v;render();});
+depSel.addEventListener("change",e=>{valgtDep=e.target.value;render();});
+document.getElementById("fristVelger").addEventListener("change",e=>{valgtFrist=e.target.value;render();});
+fylkeSel.addEventListener("change",e=>{valgtFylke=e.target.value;render();});
+document.getElementById("sortVelger").addEventListener("change",e=>{sortering=e.target.value;render();});
+
+render();
+</script>
+</body>
+</html>
