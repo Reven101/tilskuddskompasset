@@ -1,0 +1,4 @@
+tilskudd_data/raw/
+__pycache__/
+*.pyc
+.env
