@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slektstre – Simen Hustad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F2EDE0;
+  --ink: #27332D;
+  --spruce: #1F4E45;
+  --rose: #D9A199;
+  --mustard: #D9A441;
+  --card: #FBF8F0;
+  --line: #C9C0AC;
+  --shadow: rgba(31,78,69,.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Jost', sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  text-align: center;
+  padding: 44px 20px 28px;
+  border-bottom: 3px double var(--spruce);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .66rem;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--spruce);
+}
+h1 {
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--spruce);
+  margin: .25em 0 .2em;
+}
+.subtitle {
+  font-size: .95rem;
+  color: #46514A;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: .08em;
+}
+
+/* TREE LAYOUT */
+.tree-container {
+  max-width: 1100px;
+  margin: 40px auto 60px;
+  padding: 0 24px;
+  overflow-x: auto;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-width: 700px;
+}
+
+/* Generations */
+.gen {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+  width: 100%;
+}
+
+.gen-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .56rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #8A9089;
+  text-align: left;
+  padding: 0 0 6px 4px;
+  margin-bottom: 0;
+}
+
+/* Person cards */
+.person {
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 150px;
+  max-width: 200px;
+  flex: 1;
+  position: relative;
+  transition: box-shadow .15s;
+}
+.person:hover {
+  box-shadow: 5px 5px 0 var(--shadow);
+}
+.person.proband {
+  border-color: var(--spruce);
+  border-width: 2.5px;
+  background: #EEF5F3;
+}
+.person.proband .name {
+  color: var(--spruce);
+}
+.person .role {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #8A9089;
+  margin-bottom: 4px;
+}
+.person .name {
+  font-weight: 700;
+  font-size: .97rem;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.person .born {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  color: var(--spruce);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.person .maiden {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .58rem;
+  color: #6B756D;
+  margin-top: 2px;
+}
+.person .place {
+  font-size: .72rem;
+  color: #6B756D;
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* Couple bracket */
+.couple {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  position: relative;
+}
+.couple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 1.5px;
+  background: var(--line);
+}
+.couple .person:first-child {
+  border-right: none;
+}
+.couple .person:last-child {
+  border-left: 1.5px dashed var(--line);
+}
+
+/* Connectors between generations */
+.connector {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 36px;
+}
+
+/* Vertical line from child up */
+.connector-single {
+  width: 1.5px;
+  height: 100%;
+  background: var(--ink);
+  margin: 0 auto;
+}
+
+/* Horizontal + vertical lines for two parent groups */
+.connector-two {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  position: relative;
+}
+.connector-two::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  right: 25%;
+  height: 1.5px;
+  background: var(--ink);
+}
+.connector-two .leg {
+  width: 1.5px;
+  height: 36px;
+  background: var(--ink);
+}
+
+/* Grandparent connector */
+.connector-four {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  position: relative;
+}
+.connector-four::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1.5px;
+  background: var(--ink);
+}
+.connector-four .leg {
+  width: 1.5px;
+  height: 36px;
+  background: var(--ink);
+}
+
+/* Gen rows */
+.gen-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gen-row-label {
+  width: 100%;
+  text-align: left;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .54rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #A09888;
+  padding-left: 2px;
+  margin-bottom: 6px;
+}
+
+.grandparents-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.grandparents-side {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.parents-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+  width: 100%;
+}
+
+.proband-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Legend */
+.legend {
+  max-width: 1100px;
+  margin: 0 auto 40px;
+  padding: 0 24px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6B756D;
+}
+.legend-swatch {
+  width: 16px;
+  height: 10px;
+  border: 1.5px solid var(--ink);
+}
+.legend-swatch.proband-swatch {
+  border-color: var(--spruce);
+  border-width: 2.5px;
+  background: #EEF5F3;
+}
+
+/* Divider */
+.divider {
+  max-width: 1100px;
+  margin: 0 auto 28px;
+  border: none;
+  border-top: 1px solid var(--line);
+  padding: 0 24px;
+}
+
+/* Notes section */
+.notes {
+  max-width: 1100px;
+  margin: 0 auto 60px;
+  padding: 0 24px;
+}
+.notes h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .66rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--spruce);
+  margin-bottom: 12px;
+}
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.note-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+}
+.note-card .nc-name {
+  font-weight: 600;
+  font-size: .9rem;
+  margin-bottom: 4px;
+}
+.note-card .nc-detail {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .06em;
+  color: #6B756D;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .tree-container { padding: 0 12px; }
+  .person { min-width: 110px; padding: 9px 10px; }
+  .person .name { font-size: .84rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Slektstre</p>
+  <h1>Simen Hustad</h1>
+  <p class="subtitle">Fire generasjoner &nbsp;·&nbsp; Hustad &amp; Simensen</p>
+</header>
+
+<div class="tree-container">
+  <div class="tree">
+
+    <!-- GEN 3: Besteforeldre -->
+    <div class="gen-row">
+      <div class="gen-row-label">Besteforeldre</div>
+      <div class="grandparents-row">
+
+        <!-- Paternal grandparents -->
+        <div class="grandparents-side">
+          <div class="person">
+            <div class="role">Farfar</div>
+            <div class="name">Tormod Hustad</div>
+            <div class="born">f. 1889</div>
+          </div>
+          <div class="person">
+            <div class="role">Farmor</div>
+            <div class="name">Anne Margrethe Hustad</div>
+            <div class="born">f. 1901</div>
+            <div class="maiden">f. Husberg</div>
+          </div>
+        </div>
+
+        <!-- Maternal grandparents -->
+        <div class="grandparents-side">
+          <div class="person">
+            <div class="role">Morfar</div>
+            <div class="name">Erling Simensen</div>
+            <div class="born">&nbsp;</div>
+            <div class="place">Drammen</div>
+          </div>
+          <div class="person">
+            <div class="role">Mormor</div>
+            <div class="name">Sigrid Simensen</div>
+            <div class="born">&nbsp;</div>
+            <div class="maiden">f. Werner</div>
+            <div class="place">Drammen</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /grandparents -->
+
+    <!-- Connector: grandparents → parents -->
+    <div class="connector connector-four">
+      <div class="leg"></div>
+      <div class="leg"></div>
+      <div class="leg"></div>
+      <div class="leg"></div>
+    </div>
+
+    <!-- GEN 2: Foreldre -->
+    <div class="gen-row">
+      <div class="gen-row-label">Foreldre</div>
+      <div class="parents-row">
+
+        <div class="person">
+          <div class="role">Far</div>
+          <div class="name">Tom Hustad</div>
+          <div class="born">f. 1921</div>
+        </div>
+
+        <div class="person">
+          <div class="role">Mor</div>
+          <div class="name">Hilde Hustad</div>
+          <div class="born">f. 1934</div>
+          <div class="maiden">f. Simensen</div>
+        </div>
+
+      </div>
+    </div><!-- /parents -->
+
+    <!-- Connector: parents → proband -->
+    <div class="connector connector-two">
+      <div class="leg"></div>
+      <div class="leg"></div>
+    </div>
+
+    <!-- GEN 1: Simen -->
+    <div class="gen-row">
+      <div class="gen-row-label">Deg selv</div>
+      <div class="proband-row">
+        <div class="person proband">
+          <div class="role">Proband</div>
+          <div class="name">Simen Hustad</div>
+          <div class="born">f. 1969</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tree -->
+</div><!-- /tree-container -->
+
+<hr class="divider">
+
+<div class="notes">
+  <h2>Oversikt</h2>
+  <div class="note-grid">
+    <div class="note-card">
+      <div class="nc-name">Simen Hustad</div>
+      <div class="nc-detail">
+        Født: 1969<br>
+        Far: Tom Hustad (f. 1921)<br>
+        Mor: Hilde Simensen (f. 1934)
+      </div>
+    </div>
+    <div class="note-card">
+      <div class="nc-name">Tom Hustad</div>
+      <div class="nc-detail">
+        Født: 1921<br>
+        Far: Tormod Hustad (f. 1889)<br>
+        Mor: Anne Margrethe Husberg (f. 1901)
+      </div>
+    </div>
+    <div class="note-card">
+      <div class="nc-name">Hilde Simensen</div>
+      <div class="nc-detail">
+        Født: 1934<br>
+        Far: Erling Simensen<br>
+        Mor: Sigrid Werner<br>
+        Hjemsted: Drammen
+      </div>
+    </div>
+    <div class="note-card">
+      <div class="nc-name">Tormod Hustad</div>
+      <div class="nc-detail">Født: 1889</div>
+    </div>
+    <div class="note-card">
+      <div class="nc-name">Anne Margrethe Hustad</div>
+      <div class="nc-detail">
+        Født: 1901<br>
+        Pigenavn: Husberg
+      </div>
+    </div>
+    <div class="note-card">
+      <div class="nc-name">Erling &amp; Sigrid Simensen</div>
+      <div class="nc-detail">
+        Fra Drammen<br>
+        Sigrid pigenavn: Werner
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
