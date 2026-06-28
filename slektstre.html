@@ -16,6 +16,8 @@
   --card: #FBF8F0;
   --line: #C9C0AC;
   --shadow: rgba(31,78,69,.12);
+  --warn: #8B3A0F;
+  --warn-bg: #FDF0E6;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -27,12 +29,11 @@ body {
   min-height: 100vh;
 }
 
-/* HEADER */
 header {
   text-align: center;
   padding: 44px 20px 28px;
   border-bottom: 3px double var(--spruce);
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 .eyebrow {
@@ -51,18 +52,17 @@ h1 {
   margin: .25em 0 .2em;
 }
 .subtitle {
-  font-size: .95rem;
-  color: #46514A;
   font-family: 'IBM Plex Mono', monospace;
   font-size: .72rem;
   letter-spacing: .08em;
+  color: #46514A;
 }
 
-/* TREE LAYOUT */
+/* TREE */
 .tree-container {
-  max-width: 1100px;
-  margin: 40px auto 60px;
-  padding: 0 24px;
+  max-width: 1200px;
+  margin: 36px auto 0;
+  padding: 0 20px 50px;
   overflow-x: auto;
 }
 
@@ -70,130 +70,109 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  min-width: 700px;
+  min-width: 900px;
 }
 
-/* Generations */
-.gen {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  position: relative;
-  width: 100%;
-}
-
-.gen-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .56rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: #8A9089;
-  text-align: left;
-  padding: 0 0 6px 4px;
-  margin-bottom: 0;
-}
-
-/* Person cards */
+/* Person card */
 .person {
   background: var(--card);
   border: 1.5px solid var(--ink);
   box-shadow: 3px 3px 0 var(--shadow);
-  padding: 12px 16px;
+  padding: 10px 13px;
   text-align: center;
-  min-width: 150px;
-  max-width: 200px;
+  min-width: 140px;
+  max-width: 190px;
   flex: 1;
-  position: relative;
   transition: box-shadow .15s;
+  position: relative;
 }
-.person:hover {
-  box-shadow: 5px 5px 0 var(--shadow);
-}
+.person:hover { box-shadow: 5px 5px 0 var(--shadow); }
+
 .person.proband {
   border-color: var(--spruce);
   border-width: 2.5px;
   background: #EEF5F3;
 }
-.person.proband .name {
-  color: var(--spruce);
+.person.notable {
+  border-color: var(--warn);
+  background: var(--warn-bg);
 }
 .person .role {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: .52rem;
+  font-size: .50rem;
   letter-spacing: .14em;
   text-transform: uppercase;
   color: #8A9089;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 .person .name {
   font-weight: 700;
-  font-size: .97rem;
-  line-height: 1.25;
+  font-size: .90rem;
+  line-height: 1.2;
   color: var(--ink);
 }
+.person.proband .name { color: var(--spruce); }
+.person.notable .name { color: var(--warn); }
 .person .born {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: .68rem;
+  font-size: .63rem;
   color: var(--spruce);
-  margin-top: 4px;
+  margin-top: 3px;
   font-weight: 500;
 }
 .person .maiden {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: .58rem;
+  font-size: .55rem;
   color: #6B756D;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .person .place {
-  font-size: .72rem;
+  font-size: .68rem;
   color: #6B756D;
-  margin-top: 3px;
+  margin-top: 2px;
   font-style: italic;
 }
+.person .tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .48rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-top: 4px;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+}
 
-/* Couple bracket */
-.couple {
+/* Generation rows */
+.gen-row {
+  width: 100%;
   display: flex;
-  gap: 0;
-  align-items: stretch;
-  position: relative;
+  flex-direction: column;
+  align-items: center;
 }
-.couple::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 28px;
-  height: 1.5px;
-  background: var(--line);
-}
-.couple .person:first-child {
-  border-right: none;
-}
-.couple .person:last-child {
-  border-left: 1.5px dashed var(--line);
+.gen-row-label {
+  width: 100%;
+  text-align: left;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .54rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #A09888;
+  padding-left: 2px;
+  margin-bottom: 6px;
 }
 
-/* Connectors between generations */
+/* Connectors */
 .connector {
   display: flex;
   justify-content: center;
-  position: relative;
   width: 100%;
-  height: 36px;
+  height: 32px;
+  position: relative;
 }
-
-/* Vertical line from child up */
-.connector-single {
-  width: 1.5px;
-  height: 100%;
-  background: var(--ink);
-  margin: 0 auto;
-}
-
-/* Horizontal + vertical lines for two parent groups */
+.connector-single { width: 1.5px; height: 100%; background: var(--ink); margin: 0 auto; }
 .connector-two {
   display: flex;
   align-items: flex-end;
@@ -210,13 +189,8 @@ h1 {
   height: 1.5px;
   background: var(--ink);
 }
-.connector-two .leg {
-  width: 1.5px;
-  height: 36px;
-  background: var(--ink);
-}
+.connector-two .leg { width: 1.5px; height: 32px; background: var(--ink); }
 
-/* Grandparent connector */
 .connector-four {
   display: flex;
   align-items: flex-end;
@@ -233,39 +207,15 @@ h1 {
   height: 1.5px;
   background: var(--ink);
 }
-.connector-four .leg {
-  width: 1.5px;
-  height: 36px;
-  background: var(--ink);
-}
+.connector-four .leg { width: 1.5px; height: 32px; background: var(--ink); }
 
-/* Gen rows */
-.gen-row {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.gen-row-label {
-  width: 100%;
-  text-align: left;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .54rem;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: #A09888;
-  padding-left: 2px;
-  margin-bottom: 6px;
-}
-
+/* Grandparents row splits into two sides */
 .grandparents-row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
-
 .grandparents-side {
   display: flex;
   gap: 8px;
@@ -273,66 +223,86 @@ h1 {
   justify-content: center;
 }
 
+/* Great-grandparents: only one side has data */
+.greatgrand-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+.greatgrand-side {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+.greatgrand-side.empty {
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+.empty-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .54rem;
+  letter-spacing: .08em;
+  color: #B0A898;
+  text-align: center;
+  padding: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 3px;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Connector for four branches where only left side has parents */
+.connector-gg {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  position: relative;
+  height: 32px;
+}
+.connector-gg::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12.5%;
+  width: 12.5%;
+  height: 1.5px;
+  background: var(--ink);
+}
+.connector-gg .leg-left { width: 1.5px; height: 32px; background: var(--ink); margin-left: 12.5%; }
+.connector-gg .leg-right { width: 1.5px; height: 32px; background: var(--line); opacity: 0; }
+
+/* Parents row */
 .parents-row {
   display: flex;
   justify-content: space-around;
   gap: 16px;
   width: 100%;
 }
-
 .proband-row {
   display: flex;
   justify-content: center;
   width: 100%;
 }
 
-/* Legend */
-.legend {
-  max-width: 1100px;
-  margin: 0 auto 40px;
-  padding: 0 24px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .6rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #6B756D;
-}
-.legend-swatch {
-  width: 16px;
-  height: 10px;
-  border: 1.5px solid var(--ink);
-}
-.legend-swatch.proband-swatch {
-  border-color: var(--spruce);
-  border-width: 2.5px;
-  background: #EEF5F3;
-}
-
-/* Divider */
+/* NOTES */
 .divider {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto 28px;
   border: none;
   border-top: 1px solid var(--line);
   padding: 0 24px;
 }
 
-/* Notes section */
-.notes {
-  max-width: 1100px;
-  margin: 0 auto 60px;
+.section {
+  max-width: 1200px;
+  margin: 0 auto 40px;
   padding: 0 24px;
 }
-.notes h2 {
+.section h2 {
   font-family: 'IBM Plex Mono', monospace;
   font-size: .66rem;
   letter-spacing: .2em;
@@ -340,6 +310,7 @@ h1 {
   color: var(--spruce);
   margin-bottom: 12px;
 }
+
 .note-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -350,8 +321,12 @@ h1 {
   border: 1px solid var(--line);
   padding: 12px 14px;
 }
+.note-card.warn-card {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
 .note-card .nc-name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: .9rem;
   margin-bottom: 4px;
 }
@@ -360,13 +335,44 @@ h1 {
   font-size: .62rem;
   letter-spacing: .06em;
   color: #6B756D;
-  line-height: 1.7;
+  line-height: 1.8;
+}
+.note-card.warn-card .nc-detail { color: #7A4020; }
+
+/* Sidebar list */
+.sibling-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.sib {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .05em;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: #46514A;
 }
 
-@media (max-width: 640px) {
-  .tree-container { padding: 0 12px; }
-  .person { min-width: 110px; padding: 9px 10px; }
-  .person .name { font-size: .84rem; }
+/* Source note */
+.source-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .05em;
+  color: #A09888;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+  line-height: 1.8;
+}
+.source-note a { color: var(--spruce); }
+
+@media (max-width: 700px) {
+  .tree-container { padding: 0 10px 40px; }
+  .person { min-width: 100px; padding: 8px 8px; }
+  .person .name { font-size: .78rem; }
 }
 </style>
 </head>
@@ -375,33 +381,65 @@ h1 {
 <header>
   <p class="eyebrow">Slektstre</p>
   <h1>Simen Hustad</h1>
-  <p class="subtitle">Fire generasjoner &nbsp;·&nbsp; Hustad &amp; Simensen</p>
+  <p class="subtitle">Fem generasjoner &nbsp;·&nbsp; Hustad / Husberg / Simensen / Werner</p>
 </header>
 
 <div class="tree-container">
   <div class="tree">
 
-    <!-- GEN 3: Besteforeldre -->
+    <!-- GEN 5: Oldeforeldre til farfar -->
+    <div class="gen-row">
+      <div class="gen-row-label">Tippoldeforeldre (farfars foreldre)</div>
+      <div class="greatgrand-row">
+        <div class="greatgrand-side">
+          <div class="person">
+            <div class="role">Oldefar (ff)</div>
+            <div class="name">Tørris Hustad</div>
+            <div class="born">f. 6. aug 1849 &nbsp;d. 16. aug 1931</div>
+            <div class="place">Øvre Hustad, Sandvollan</div>
+            <div class="maiden">Ordfører 1907–1919</div>
+          </div>
+          <div class="person">
+            <div class="role">Oldemor (ff)</div>
+            <div class="name">Karoline Emilie Hustad</div>
+            <div class="born">&nbsp;</div>
+            <div class="maiden">f. Sivertsdatter Bragstad</div>
+            <div class="place">Inderøy</div>
+          </div>
+        </div>
+        <div class="greatgrand-side empty">
+          <div class="empty-note">Oldeforeldre på mors side (Husberg) —<br>ikke kartlagt ennå</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connector 5→4 (only left side) -->
+    <div class="connector" style="height:32px; position:relative;">
+      <div style="position:absolute; bottom:0; left:12.5%; width:12.5%; height:1.5px; background:var(--ink);"></div>
+      <div style="position:absolute; bottom:0; left:12.5%; width:1.5px; height:32px; background:var(--ink);"></div>
+    </div>
+
+    <!-- GEN 4: Farfar og farmor -->
     <div class="gen-row">
       <div class="gen-row-label">Besteforeldre</div>
       <div class="grandparents-row">
-
-        <!-- Paternal grandparents -->
         <div class="grandparents-side">
-          <div class="person">
+          <div class="person notable">
             <div class="role">Farfar</div>
-            <div class="name">Tormod Hustad</div>
-            <div class="born">f. 1889</div>
+            <div class="name">Tormod K. Hustad</div>
+            <div class="born">15. feb 1889 – 19. aug 1973</div>
+            <div class="place">Sandvollan / Oslo</div>
+            <span class="tag">Arkitekt · NS-statsråd</span>
           </div>
           <div class="person">
             <div class="role">Farmor</div>
             <div class="name">Anne Margrethe Hustad</div>
-            <div class="born">f. 1901</div>
+            <div class="born">20. mar 1901 – 10. jan 1995</div>
             <div class="maiden">f. Husberg</div>
+            <div class="born" style="font-size:.58rem;color:#6B756D;">Gift: 30. apr 1921</div>
           </div>
         </div>
 
-        <!-- Maternal grandparents -->
         <div class="grandparents-side">
           <div class="person">
             <div class="role">Morfar</div>
@@ -417,11 +455,10 @@ h1 {
             <div class="place">Drammen</div>
           </div>
         </div>
-
       </div>
-    </div><!-- /grandparents -->
+    </div>
 
-    <!-- Connector: grandparents → parents -->
+    <!-- Connector 4→3 -->
     <div class="connector connector-four">
       <div class="leg"></div>
       <div class="leg"></div>
@@ -429,28 +466,25 @@ h1 {
       <div class="leg"></div>
     </div>
 
-    <!-- GEN 2: Foreldre -->
+    <!-- GEN 3: Foreldre -->
     <div class="gen-row">
       <div class="gen-row-label">Foreldre</div>
       <div class="parents-row">
-
         <div class="person">
           <div class="role">Far</div>
           <div class="name">Tom Hustad</div>
           <div class="born">f. 1921</div>
         </div>
-
         <div class="person">
           <div class="role">Mor</div>
           <div class="name">Hilde Hustad</div>
           <div class="born">f. 1934</div>
           <div class="maiden">f. Simensen</div>
         </div>
-
       </div>
-    </div><!-- /parents -->
+    </div>
 
-    <!-- Connector: parents → proband -->
+    <!-- Connector 3→2 -->
     <div class="connector connector-two">
       <div class="leg"></div>
       <div class="leg"></div>
@@ -468,58 +502,123 @@ h1 {
       </div>
     </div>
 
-  </div><!-- /tree -->
-</div><!-- /tree-container -->
+  </div>
+</div>
 
 <hr class="divider">
 
-<div class="notes">
-  <h2>Oversikt</h2>
+<!-- NOTES -->
+<div class="section">
+  <h2>Nøkkelopplysninger per person</h2>
   <div class="note-grid">
+
     <div class="note-card">
-      <div class="nc-name">Simen Hustad</div>
+      <div class="nc-name">Tørris Hustad</div>
       <div class="nc-detail">
-        Født: 1969<br>
-        Far: Tom Hustad (f. 1921)<br>
-        Mor: Hilde Simensen (f. 1934)
+        Født: 6. august 1849, Inderøy<br>
+        Død: 16. august 1931, Sandvollan<br>
+        Yrke: Bonde på Øvre Hustad<br>
+        Politikk: Ordfører Sandvollan 1907–1919<br>
+        Gift med: Karoline Emilie Sivertsdatter Bragstad
       </div>
     </div>
+
+    <div class="note-card">
+      <div class="nc-name">Karoline Emilie Hustad</div>
+      <div class="nc-detail">
+        Pigenavn: Sivertsdatter Bragstad<br>
+        Far: Sivert (på Bragstad-gården), Inderøy<br>
+        Gift med Tørris Hustad
+      </div>
+    </div>
+
+    <div class="note-card warn-card">
+      <div class="nc-name">Tormod Kristoffer Hustad</div>
+      <div class="nc-detail">
+        Født: 15. februar 1889, Sandvollan (Hustad-soknet)<br>
+        Død: 19. august 1973, Oslo<br>
+        Arkitekt – NTH 1914<br>
+        Vant designkonkurransen om NTH-ringen 1914<br>
+        NS-statsråd: Landbruk (1940), Arbeid (1942–44)<br>
+        Dømt for landssvik etter krigen<br>
+        Gift: 30. april 1921 med Anne Margrethe Husberg
+      </div>
+    </div>
+
+    <div class="note-card">
+      <div class="nc-name">Anne Margrethe Hustad</div>
+      <div class="nc-detail">
+        Pigenavn: Husberg<br>
+        Født: 20. mars 1901<br>
+        Død: 10. januar 1995<br>
+        Gift: 30. april 1921<br>
+        Levde til Simen var 26 år
+      </div>
+    </div>
+
     <div class="note-card">
       <div class="nc-name">Tom Hustad</div>
       <div class="nc-detail">
         Født: 1921<br>
-        Far: Tormod Hustad (f. 1889)<br>
-        Mor: Anne Margrethe Husberg (f. 1901)
+        Far: Tormod Kristoffer Hustad<br>
+        Mor: Anne Margrethe Husberg
       </div>
     </div>
+
     <div class="note-card">
       <div class="nc-name">Hilde Simensen</div>
       <div class="nc-detail">
         Født: 1934<br>
-        Far: Erling Simensen<br>
-        Mor: Sigrid Werner<br>
-        Hjemsted: Drammen
+        Far: Erling Simensen, Drammen<br>
+        Mor: Sigrid Werner, Drammen<br>
+        Gift med Tom Hustad
       </div>
     </div>
-    <div class="note-card">
-      <div class="nc-name">Tormod Hustad</div>
-      <div class="nc-detail">Født: 1889</div>
-    </div>
-    <div class="note-card">
-      <div class="nc-name">Anne Margrethe Hustad</div>
-      <div class="nc-detail">
-        Født: 1901<br>
-        Pigenavn: Husberg
-      </div>
-    </div>
+
     <div class="note-card">
       <div class="nc-name">Erling &amp; Sigrid Simensen</div>
       <div class="nc-detail">
         Fra Drammen<br>
-        Sigrid pigenavn: Werner
+        Sigrid pigenavn: Werner<br>
+        Werner-navn: sannsynlig tysk opprinnelse –<br>
+        tyske handelsfamilier var vanlig i Drammen på 1800-tallet
       </div>
     </div>
+
   </div>
+</div>
+
+<div class="section">
+  <h2>Kjente søsken til Tormod (Tørris' øvrige barn)</h2>
+  <div class="sibling-list">
+    <div class="sib">Peder Konrad Hustad &nbsp;·&nbsp; f. 5. apr 1878, Sandvollan &nbsp;·&nbsp; d. 18. mai 1933 &nbsp;·&nbsp; Agronom</div>
+    <div class="sib">Kristian Laurits Tørrisen Hustad &nbsp;·&nbsp; f. 1883 &nbsp;·&nbsp; d. 1942</div>
+    <div class="sib">Ole Sivert Hustad &nbsp;·&nbsp; kjøpte/arvet Hustad vestre (1900-tellingen)</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Om Hustad-gården</h2>
+  <div class="note-card" style="max-width:640px;">
+    <div class="nc-detail">
+      Gårdsnavnet <strong>Hustad</strong> er et gammelt norsk stedsnavn (trolig av «hus» + «stad»).<br>
+      Gården Hustad ligger i Sandvollan, som i 1907 ble en egen kommune (utskilt fra Inderøy).<br>
+      Det er to bruk: <em>Hustad øvre</em> (Tørris-linjen) og <em>Hustad vestre</em> (Ole Sivert-linjen).<br>
+      Sandvollan-kommunen (inkl. Hustad-soknet) ble slått tilbake inn i Inderøy i 1964.
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <p class="source-note">
+    Kilder: <a href="https://www.digitalarkivet.no" target="_blank">Digitalarkivet.no</a> (Folketelling 1891 for Inderøy herred) ·
+    <a href="https://en.wikipedia.org/wiki/Tormod_Kristoffer_Hustad" target="_blank">Wikipedia – Tormod Kristoffer Hustad</a> ·
+    <a href="https://no.wikipedia.org/wiki/T%C3%B8rris_Hustad" target="_blank">Wikipedia – Tørris Hustad</a> ·
+    <a href="https://no.wikipedia.org/wiki/Peder_Konrad_Hustad" target="_blank">Wikipedia – Peder Konrad Hustad</a> ·
+    <a href="https://kulturnav.org/4fd73963-1e4f-4965-9409-b377099a2c6f" target="_blank">KulturNav – Tormod Hustad</a> ·
+    Hemneslekt.net · Geneanet ·
+    Åpne data – kan inneholde unøyaktigheter. Verifiser mot primærkilder.
+  </p>
 </div>
 
 </body>
