@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slektstre – Simen Hustad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F2EDE0;
+  --ink: #27332D;
+  --spruce: #1F4E45;
+  --mustard: #D9A441;
+  --card: #FBF8F0;
+  --line: #C9C0AC;
+  --shadow: rgba(31,78,69,.12);
+  --warn: #8B3A0F;
+  --warn-bg: #FDF0E6;
+  --slate: #46514A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Jost', sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ── */
+header {
+  text-align: center;
+  padding: 40px 20px 24px;
+  border-bottom: 3px double var(--spruce);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--spruce);
+}
+h1 {
+  font-size: clamp(1.5rem, 4.5vw, 2.3rem);
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--spruce);
+  margin: .2em 0 .15em;
+}
+.subtitle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  color: var(--slate);
+}
+
+/* ── TREE SHELL ── */
+.tree-container {
+  max-width: 1400px;
+  margin: 32px auto 0;
+  padding: 0 16px 50px;
+  overflow-x: auto;
+}
+.tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2100px;
+  gap: 0;
+}
+
+/* ── PERSON CARD ── */
+.p {
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--shadow);
+  padding: 8px 11px;
+  text-align: center;
+  min-width: 120px;
+  max-width: 172px;
+  flex: 1;
+  transition: box-shadow .12s;
+}
+.p:hover { box-shadow: 4px 4px 0 var(--shadow); }
+.p.me   { border: 2.5px solid var(--spruce); background: #EEF5F3; }
+.p.ns   { border-color: var(--warn); background: var(--warn-bg); }
+.p .role {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .46rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8A9089;
+  margin-bottom: 2px;
+}
+.p .nm  { font-weight: 700; font-size: .84rem; line-height: 1.2; }
+.p.me .nm { color: var(--spruce); }
+.p.ns .nm { color: var(--warn); }
+.p .dt  { font-family:'IBM Plex Mono',monospace; font-size:.58rem; color:var(--spruce); margin-top:3px; }
+.p .mn  { font-family:'IBM Plex Mono',monospace; font-size:.52rem; color:#6B756D; margin-top:1px; }
+.p .pl  { font-size:.63rem; color:#6B756D; font-style:italic; margin-top:2px; }
+.p .tag {
+  display:inline-block; font-family:'IBM Plex Mono',monospace;
+  font-size:.44rem; letter-spacing:.05em; text-transform:uppercase;
+  padding:1px 5px; border-radius:999px; margin-top:3px;
+  border:1px solid var(--warn); color:var(--warn);
+}
+.p.ghost {
+  border-style: dashed;
+  border-color: var(--line);
+  background: transparent;
+  box-shadow: none;
+}
+.p.ghost .nm { color:#A09888; font-weight:500; }
+.p.ghost .dt { color:#B0A898; }
+
+/* ── GENERATION ROW ── */
+.gen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gen-lbl {
+  width: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .50rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #B0A898;
+  padding-left: 2px;
+  margin-bottom: 5px;
+}
+
+/* ── PERSON GROUPS ── */
+.row { display:flex; justify-content:space-between; gap:10px; width:100%; }
+.side { display:flex; gap:6px; flex:1; justify-content:center; }
+.center { display:flex; justify-content:center; width:100%; }
+.couple-gap { display:flex; gap:6px; justify-content:center; }
+
+/* ── CONNECTORS ── */
+.conn {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  position: relative;
+}
+/* single vertical */
+.conn.c1::after {
+  content:''; position:absolute; bottom:0; left:50%;
+  width:1.5px; height:28px; background:var(--ink);
+}
+/* two branches → one child */
+.conn.c2 .leg { width:1.5px; height:28px; background:var(--ink); }
+.conn.c2 { align-items:flex-end; justify-content:space-around; }
+.conn.c2::before {
+  content:''; position:absolute; bottom:0;
+  left:25%; right:25%; height:1.5px; background:var(--ink);
+}
+/* four branches */
+.conn.c4 { align-items:flex-end; justify-content:space-around; }
+.conn.c4 .leg { width:1.5px; height:28px; background:var(--ink); }
+.conn.c4::before {
+  content:''; position:absolute; bottom:0;
+  left:12.5%; right:12.5%; height:1.5px; background:var(--ink);
+}
+/* eight branches */
+.conn.c8 { align-items:flex-end; justify-content:space-around; }
+.conn.c8 .leg { width:1.5px; height:28px; background:var(--ink); }
+.conn.c8::before {
+  content:''; position:absolute; bottom:0;
+  left:6.25%; right:6.25%; height:1.5px; background:var(--ink);
+}
+
+/* ── NOTES ── */
+.hr { max-width:1400px; margin:0 auto 24px; border:none; border-top:1px solid var(--line); }
+
+.sec { max-width:1400px; margin:0 auto 36px; padding:0 20px; }
+.sec h2 {
+  font-family:'IBM Plex Mono',monospace; font-size:.62rem;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--spruce); margin-bottom:11px;
+}
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+.card {
+  background:var(--card); border:1px solid var(--line); padding:11px 13px;
+}
+.card.warn { border-color:var(--warn); background:var(--warn-bg); }
+.card .cn { font-weight:700; font-size:.86rem; margin-bottom:3px; }
+.card .cd {
+  font-family:'IBM Plex Mono',monospace; font-size:.59rem;
+  letter-spacing:.05em; color:#6B756D; line-height:1.8;
+}
+.card.warn .cd { color:#7A4020; }
+
+.chips { display:flex; flex-wrap:wrap; gap:7px; }
+.chip {
+  font-family:'IBM Plex Mono',monospace; font-size:.57rem;
+  letter-spacing:.04em; padding:3px 9px;
+  border:1px solid var(--line); background:var(--paper); color:var(--slate);
+}
+.chip.warn {
+  border-color:var(--mustard); background:var(--warn-bg); color:var(--warn);
+}
+
+.src {
+  font-family:'IBM Plex Mono',monospace; font-size:.54rem;
+  letter-spacing:.04em; color:#A09888; line-height:1.85;
+  margin-top:20px; padding-top:12px; border-top:1px dashed var(--line);
+}
+.src a { color:var(--spruce); }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Slektstre</p>
+  <h1>Simen Hustad</h1>
+  <p class="subtitle">Seks generasjoner &nbsp;·&nbsp; Hustad &nbsp;/&nbsp; Husberg &nbsp;/&nbsp; Simensen &nbsp;/&nbsp; Werner</p>
+</header>
+
+<div class="tree-container">
+<div class="tree">
+
+<!-- ═══════════════════════════════════════════════════════
+     GEN 6 — Tipp-tipp-oldeforeldre (kjente)
+═══════════════════════════════════════════════════════ -->
+<div class="gen">
+  <div class="gen-lbl">Tipp-tipp-oldeforeldre (kjente)</div>
+  <div class="row">
+
+    <!-- fff: Tørris Hustads foreldre (ukjente) -->
+    <div class="side">
+      <div class="p ghost">
+        <div class="role">Oldefar (fff)</div>
+        <div class="nm">ukjent</div>
+        <div class="pl">Inderøy?</div>
+      </div>
+      <div class="p ghost">
+        <div class="role">Oldemor (fff)</div>
+        <div class="nm">ukjent</div>
+      </div>
+    </div>
+
+    <!-- ffm: Karoline Bragstads foreldre -->
+    <div class="side">
+      <div class="p ghost">
+        <div class="role">Oldefar (ffm)</div>
+        <div class="nm">Sivert Bragstad</div>
+        <div class="dt">fl. ca. 1820?</div>
+        <div class="pl">Inderøy</div>
+      </div>
+      <div class="p ghost">
+        <div class="role">Oldemor (ffm)</div>
+        <div class="nm">ukjent</div>
+      </div>
+    </div>
+
+    <!-- fmf: Carl Husbergs foreldre -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (fmf)</div>
+        <div class="nm">Carl A. Husberg</div>
+        <div class="dt">f. ca. 1829 – ?</div>
+        <div class="pl">Tune prestegjeld</div>
+        <div class="mn">Handelsborger</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (fmf)</div>
+        <div class="nm">Anne Margrethe Lowum</div>
+        <div class="dt">f. ca. 1837</div>
+        <div class="pl">Borge prestegjeld</div>
+      </div>
+    </div>
+
+    <!-- fmm: Agnethe Jensine Hagens foreldre -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (fmm)</div>
+        <div class="nm">Jens Andersen Hagen</div>
+        <div class="dt">f. 1832, Romedal</div>
+        <div class="mn">Garvermester · Storting</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (fmm)</div>
+        <div class="nm">Christiana A. Hagen</div>
+        <div class="dt">f. 1833</div>
+        <div class="pl">Vaaler Soløer</div>
+      </div>
+    </div>
+
+    <!-- mff: Christian Julius Simensens foreldre -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (mff)</div>
+        <div class="nm">Simen Ellefsen</div>
+        <div class="dt">f. 1824</div>
+        <div class="pl">Eker</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (mff)</div>
+        <div class="nm">Karoline Torgersdatter</div>
+        <div class="dt">&nbsp;</div>
+      </div>
+    </div>
+
+    <!-- mfm: Inga Skars foreldre -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (mfm)</div>
+        <div class="nm">Nils Jacobsen Skar</div>
+        <div class="dt">f. 1831</div>
+        <div class="pl">Eker</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (mfm)</div>
+        <div class="nm">Kari Skar</div>
+        <div class="dt">f. 1836</div>
+        <div class="pl">Eker</div>
+      </div>
+    </div>
+
+    <!-- mmf: Eduard Werner (Ferdinands far) -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (mmf)</div>
+        <div class="nm">Eduard Werner</div>
+        <div class="dt">1851 – 1923</div>
+        <div class="pl">Drammen</div>
+        <div class="mn">Gr.la Werners Magasin 1875</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (mmf)</div>
+        <div class="nm">Karen Werner</div>
+        <div class="dt">&nbsp;</div>
+        <div class="mn">f. ukjent</div>
+      </div>
+    </div>
+
+    <!-- mmm: Sigrid Olsens foreldre -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (mmm)</div>
+        <div class="nm">Carl Johan August Olsen</div>
+        <div class="pl">Grønland, Drammen</div>
+        <div class="mn">Fuldmægtig</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (mmm)</div>
+        <div class="nm">Hilda Lorentse Larsen</div>
+        <div class="pl">Grønland, Drammen</div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /gen6 -->
+
+<!-- connectors 6→5 (8 grupper, parvis til 4 Gen5-par) -->
+<div class="conn" style="height:40px; position:relative;">
+  <!-- fff+ffm → Tørris+Karoline (12.5%) -->
+  <div style="position:absolute;top:0;left:6.25%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:0;left:18.75%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:19px;left:6.25%;width:12.5%;height:1.5px;background:var(--ink);"></div>
+  <div style="position:absolute;top:20px;left:12.5%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <!-- fmf+fmm → Carl Husberg+Agnethe (37.5%) -->
+  <div style="position:absolute;top:0;left:31.25%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:0;left:43.75%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:19px;left:31.25%;width:12.5%;height:1.5px;background:var(--ink);"></div>
+  <div style="position:absolute;top:20px;left:37.5%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <!-- mff+mfm → Christian Julius+Inga (62.5%) -->
+  <div style="position:absolute;top:0;left:56.25%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:0;left:68.75%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:19px;left:56.25%;width:12.5%;height:1.5px;background:var(--ink);"></div>
+  <div style="position:absolute;top:20px;left:62.5%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <!-- mmf+mmm → Ferdinand+Sigrid (87.5%) -->
+  <div style="position:absolute;top:0;left:81.25%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:0;left:93.75%;width:1.5px;height:20px;background:var(--ink);"></div>
+  <div style="position:absolute;top:19px;left:81.25%;width:12.5%;height:1.5px;background:var(--ink);"></div>
+  <div style="position:absolute;top:20px;left:87.5%;width:1.5px;height:20px;background:var(--ink);"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     GEN 5 — Tipp-oldeforeldre
+═══════════════════════════════════════════════════════ -->
+<div class="gen">
+  <div class="gen-lbl">Tipp-oldeforeldre</div>
+  <div class="row">
+
+    <!-- Hustad-side: Tørris + Karoline -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (far)</div>
+        <div class="nm">Tørris Hustad</div>
+        <div class="dt">6. aug 1849 – 16. aug 1931</div>
+        <div class="pl">Øvre Hustad, Sandvollan</div>
+        <div class="mn">Ordfører 1907–1919</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (far)</div>
+        <div class="nm">Karoline Emilie Hustad</div>
+        <div class="dt">&nbsp;</div>
+        <div class="mn">f. Sivertsdatter Bragstad</div>
+      </div>
+    </div>
+
+    <!-- Farmor-linje: Carl Husberg (advokat) + ukjent -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (far)</div>
+        <div class="nm">Carl Husberg</div>
+        <div class="dt">5. aug 1865 – 1929</div>
+        <div class="pl">Sarpsborg → Oslo</div>
+        <div class="mn">Overretssagfører · cand.jur. 1893</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (far)</div>
+        <div class="nm">Agnethe Jensine Hagen</div>
+        <div class="dt">f. 1872, Kristiania</div>
+        <div class="pl">datter av Jens A. Hagen</div>
+      </div>
+    </div>
+
+    <!-- Simensen-side: Christian Julius + Inga -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (mor)</div>
+        <div class="nm">Christian Julius Simensen</div>
+        <div class="dt">16. nov 1858 – 1927</div>
+        <div class="pl">Øvre Eiker</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (mor)</div>
+        <div class="nm">Inga Pauline Sofie</div>
+        <div class="dt">1871 – 1906</div>
+        <div class="mn">f. Skar</div>
+      </div>
+    </div>
+
+    <!-- Werner-side: Ferdinand + Sigrid Olsen -->
+    <div class="side">
+      <div class="p">
+        <div class="role">Oldefar (mor)</div>
+        <div class="nm">Ferdinand Werner</div>
+        <div class="dt">1. jul 1876 – 1948</div>
+        <div class="pl">Drammen</div>
+        <div class="mn">Leder Werners Magasin</div>
+      </div>
+      <div class="p">
+        <div class="role">Oldemor (mor)</div>
+        <div class="nm">Sigrid Werner</div>
+        <div class="dt">f. 12. mai 1876</div>
+        <div class="pl">Drammen</div>
+        <div class="mn">f. Olsen</div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /gen5 -->
+
+<!-- connectors 5→4 -->
+<div class="conn c8">
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     GEN 4 — Besteforeldre
+═══════════════════════════════════════════════════════ -->
+<div class="gen">
+  <div class="gen-lbl">Besteforeldre</div>
+  <div class="row">
+    <div class="side">
+      <div class="p ns">
+        <div class="role">Farfar</div>
+        <div class="nm">Tormod K. Hustad</div>
+        <div class="dt">15. feb 1889 – 19. aug 1973</div>
+        <div class="pl">Sandvollan → Oslo</div>
+        <span class="tag">Arkitekt · NS-statsråd</span>
+      </div>
+      <div class="p">
+        <div class="role">Farmor</div>
+        <div class="nm">Anne Margrethe Hustad</div>
+        <div class="dt">20. mar 1901 – 10. jan 1995</div>
+        <div class="mn">f. Husberg</div>
+        <div class="mn">Gift: 30. apr 1921</div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="p">
+        <div class="role">Morfar</div>
+        <div class="nm">Erling Simensen</div>
+        <div class="dt">28. des 1905 – 9. feb 1987</div>
+        <div class="pl">Drammen → Oslo</div>
+        <div class="mn">Advokat · cand.jur. 1929</div>
+      </div>
+      <div class="p">
+        <div class="role">Mormor</div>
+        <div class="nm">Sigrid E. Simensen</div>
+        <div class="dt">6. aug 1910 – 1997</div>
+        <div class="mn">f. Werner, Strømsgodset</div>
+        <div class="mn">Gift: 1933</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /gen4 -->
+
+<!-- connectors 4→3 -->
+<div class="conn c4">
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+  <div class="leg"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     GEN 3 — Foreldre
+═══════════════════════════════════════════════════════ -->
+<div class="gen">
+  <div class="gen-lbl">Foreldre</div>
+  <div class="row" style="justify-content:space-around;">
+    <div class="side" style="flex:0 1 auto;">
+      <div class="p">
+        <div class="role">Far</div>
+        <div class="nm">Tom Hustad</div>
+        <div class="dt">f. 1921</div>
+      </div>
+    </div>
+    <div class="side" style="flex:0 1 auto;">
+      <div class="p">
+        <div class="role">Mor</div>
+        <div class="nm">Hilde Hustad</div>
+        <div class="dt">f. 1934</div>
+        <div class="mn">f. Simensen</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /gen3 -->
+
+<!-- connector 3→2 -->
+<div class="conn c2">
+  <div class="leg"></div>
+  <div class="leg"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     GEN 1 — Proband
+═══════════════════════════════════════════════════════ -->
+<div class="gen">
+  <div class="gen-lbl">Deg selv</div>
+  <div class="center">
+    <div class="p me">
+      <div class="role">Proband</div>
+      <div class="nm">Simen Hustad</div>
+      <div class="dt">f. 1969</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tree -->
+</div><!-- /tree-container -->
+
+<hr class="hr">
+
+<!-- ── NOTES ── -->
+<div class="sec">
+  <h2>Nøkkelopplysninger</h2>
+  <div class="cards">
+
+    <div class="card warn">
+      <div class="cn">Tormod Kristoffer Hustad</div>
+      <div class="cd">
+        f. 15. feb 1889, Sandvollan (Hustad-soknet), Inderøy<br>
+        d. 19. aug 1973, Oslo<br>
+        Arkitekt – utdannet NTH 1914<br>
+        Vant designkonkurransen om NTH-ringen 1914<br>
+        NS-statsråd: Landbruk (1940), Arbeid (1942–44)<br>
+        Dømt for landssvik etter krigen<br>
+        Gift 30. apr 1921 med Anne Margrethe Husberg
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Anne Margrethe Hustad</div>
+      <div class="cd">
+        f. 20. mars 1901 &nbsp;·&nbsp; d. 10. jan 1995<br>
+        Pigenavn: Husberg<br>
+        Gift: 30. april 1921<br>
+        Far: Carl Husberg (overretssagfører, Oslo)<br>
+        Levde til Simen var 25 år gammel
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Carl Husberg</div>
+      <div class="cd">
+        f. 5. aug 1865, Sarpsborg &nbsp;·&nbsp; d. 1929, Oslo<br>
+        Fullt navn: Karl Amandus Husberg (gikk som «Carl»)<br>
+        Far til farmor Anne Margrethe Husberg (1901)<br>
+        Artium Kristiania katedralskole 1884 (Meget Godt)<br>
+        Cand.jur. 1893 &nbsp;·&nbsp; Overretssagfører, egen forretn., Oslo<br>
+        Kone: <strong>Agnethe Jensine f. Hagen</strong> (f. 1872, Kristiania)<br>
+        — datter av garvermester Jens Andersen Hagen (bekreftet 1900-tellingen)<br>
+        Far: Carl A. Husberg (handelsborger, Sarpsborg, f. ca. 1829 Tune prgj.)<br>
+        Mor: Anne Margrethe f. Lowum (f. ca. 1837, Borge prestegjeld)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Carl A. Husberg</div>
+      <div class="cd">
+        f. ca. 1829, Tune prestegjeld &nbsp;·&nbsp; d. ukjent<br>
+        Handelsborger (kjøbmann) i Sarpsborg<br>
+        Fødested bekreftet: Tune prestegjeld (1865-tellingen, alder 36)<br>
+        Gift med Anne Margrethe f. Lowum (f. ca. 1837, Borge prestegjeld)<br>
+        Bosted 1865: St. Mariæ Gaden, Sarpsborg (pf01037980001929)<br>
+        Barn (1865-tellingen): Anna Wilhelmine (f. ca. 1863) · Carl Amandus (f. 1865)<br>
+        Barn (fra andre kilder): Ludvig (f. 27. jun 1869) · Marthe Fredrikke (g.m. Pharo 1898)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Jens Andersen Hagen</div>
+      <div class="cd">
+        f. 20. okt 1832, Haga, Romedal (Hedmark) &nbsp;·&nbsp; d. 21. feb 1906, Kristiania<br>
+        Foreldre: bonde Anders Hagen og Anne Marie Hagen<br>
+        Kone: <strong>Christiana A. Hagen</strong>, f. 1833, Vaaler Soløer (Hedmark)<br>
+        (bekreftet 1875-tellingen for Kristiania)<br>
+        Yrke 1875: <strong>Garvermester og gaardeier</strong>, 2 svende og 3 læredrenger<br>
+        Garveri i Kristiania fra 1858 &nbsp;·&nbsp; mursteinfabrikk fra 1895<br>
+        Bystyrerepresentant Kristiania, 1885–1894<br>
+        Stortingsrepresentant 1886 (Kria, Hønefoss og Kongsvinger · Høyre)<br>
+        Kobling til Husberg-linjen <strong>bekreftet</strong> (1900-tellingen):<br>
+        datter <strong>Agnethe Jensine Hagen</strong> (f. 1872, Kristiania) giftet seg<br>
+        med overretssagfører Karl Amandus Husberg (f. 1865, Sarpsborg)<br>
+        og er farmor Anne Margrethe Husbergs mor.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Jens Andersen Hagens barn (1875-tellingen, alle f. Kristiania)</div>
+      <div class="chips" style="margin-top:6px;">
+        <div class="chip">Hagbart Adolf Hagen · f. 1858 · sønn</div>
+        <div class="chip">Anna Berthea Hagen · f. 1859 · datter (fraværende 1875)</div>
+        <div class="chip">Assa Margrethe Hagen · f. 1860</div>
+        <div class="chip">Jens Hjalmar Hagen · f. 1861 · sønn</div>
+        <div class="chip">Martha Marie Hagen · f. 1862 · datter</div>
+        <div class="chip">Christine Hagen · f. 1867 · datter</div>
+        <div class="chip warn">Agnethe Jensine Hagen · f. 1872 · datter — gift Karl Amandus Husberg (overretssagfører) · mor til farmor Anne Margrethe Husberg (1901) · BEKREFTET</div>
+        <div class="chip">Elise Dagmar Hagen · f. 1875 · datter</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Tørris Hustad</div>
+      <div class="cd">
+        f. 6. aug 1849, Inderøy &nbsp;·&nbsp; d. 16. aug 1931, Sandvollan<br>
+        Bonde på Øvre Hustad, Sandvollan<br>
+        Ordfører i Sandvollan kommune 1907–1919<br>
+        Gift med Karoline Emilie Sivertsdatter Bragstad<br>
+        (Karoline var datter av Sivert på Bragstad-gården)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Tørris og Karolines sønner (åtte gutter)</div>
+      <div class="chips" style="margin-top:6px;">
+        <div class="chip">Ole Sivert Hustad · f. 1873</div>
+        <div class="chip">John Leopold Hustad · f. 1875</div>
+        <div class="chip">Peder Konrad Hustad · f. 5. apr 1878 · d. 18. mai 1933 · Agronom · ordfører Leinstrand 1929–31</div>
+        <div class="chip">Martin Severin Hustad · f. 1880</div>
+        <div class="chip">Kristian Laurits Hustad · f. 1883</div>
+        <div class="chip">Einar Marius Hustad · f. 1885</div>
+        <div class="chip warn">Tormod Kristoffer Hustad · f. 1889 — Simens farfar</div>
+        <div class="chip">Haakon T. Hustad · f. 1892</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Erling Simensen</div>
+      <div class="cd">
+        f. 28. des 1905, Drammen &nbsp;·&nbsp; d. 9. feb 1987, Oslo<br>
+        Gravlagt: Ris kirkegård (urnelund), Oslo<br>
+        Artium Drammens offentlige skole 1925 &nbsp;·&nbsp; Cand.jur. 1929<br>
+        Sakfører fra 1929 &nbsp;·&nbsp; Kompanjong Sigbjørn Mustad, Gjøvik 1932<br>
+        Bosted Gjøvik: Trondhjemsvegen 61 &nbsp;·&nbsp; Siden tilbake til Oslo<br>
+        Gift 1933 med Sigrid Elisabeth Werner (1910–1997)<br>
+        Barn: to døtre og én sønn (1934–1942) — Hilde (f. 1934) er Simens mor<br>
+        Far: Christian Julius Simensen (1858–1927) &nbsp;·&nbsp; Mor: Pauline Sofie f. Skar (1871–1906)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Sigrid Elisabeth Simensen</div>
+      <div class="cd">
+        f. 6. aug 1910, Strømsgodset &nbsp;·&nbsp; d. 1997<br>
+        Pigenavn: Werner (reg. som «Elisabeth» i 1910-tellingen)<br>
+        Far: Ferdinand Werner (f. 1. jul 1876, Drammen) &nbsp;·&nbsp; d. 1948<br>
+        Mor: Sigrid f. Olsen (f. 12. mai 1876, Drammen)<br>
+        Gift 1933 med Erling Simensen (1905–1987)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Christian Julius Simensen</div>
+      <div class="cd">
+        f. 16. nov 1858, Eker &nbsp;·&nbsp; d. 1927<br>
+        Yrke: Murmester<br>
+        Far: Simen Ellefsen f. 1824 (derav etternavnet «Simensen»)<br>
+        Mor: Karoline Torgersdatter<br>
+        Gift med Inga Pauline Sofie f. Skar (1871–1906)<br>
+        Inga: datter av Nils Jacobsen Skar (f. 1831, Eker) og Kari Skar (f. 1836, Eker)<br>
+        9 barn (1889–ca. 1906) &nbsp;·&nbsp; Inga døde da Erling var knapt 1 år
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Ferdinand Werner</div>
+      <div class="cd">
+        f. 1. jul 1876, Drammen &nbsp;·&nbsp; d. 1948<br>
+        Kontorchef i Glasmagasin (1910-tellingen) · Leder Werners Magasin etter 1923<br>
+        Far: Eduard Werner (1851–1923)<br>
+        Mor: Karen (ukjent etternavn)<br>
+        Gift med Sigrid f. Olsen (f. 12. mai 1876, Drammen)<br>
+        Sigrids far: Carl Johan August Olsen (fuldmægtig, Grønland, Drammen)<br>
+        Sigrids mor: Hilda Lorentse Larsen
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cn">Eduard Werner</div>
+      <div class="cd">
+        f. 1851 &nbsp;·&nbsp; d. 1923, Drammen<br>
+        Kobber- og blikkenslager<br>
+        Grunnla Werners Magasin, Drammen, 1875<br>
+        Butikk: Tollbodgaten 4 fra 1900<br>
+        Ca. 50 ansatte på slutten av 1930-tallet<br>
+        Kalt «Eduard Nilsson Werner» — far trolig en Nils
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="sec">
+  <h2>Søsken og sidelinjer</h2>
+  <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+    <div class="card">
+      <div class="cn">Ferdinands og Sigrids barn (1910-tellingen, sju barn)</div>
+      <div class="chips" style="margin-top:6px;">
+        <div class="chip">Birgit Werner · f. 30. jul 1900 · Drammen</div>
+        <div class="chip">Thordis Werner · f. 17. okt 1901 · Drammen</div>
+        <div class="chip">Edvard Werner · f. 21. apr 1903 · Drammen · d. 1955 · Leder Werners Magasin 1933–55</div>
+        <div class="chip">Aase Werner · f. 24. jan 1905 · Strømsgodset</div>
+        <div class="chip">Ferdinand Wilh. Aug. Werner · f. 12. nov 1906 · Strømsgodset</div>
+        <div class="chip">Kjell Werner · f. 19. apr 1909 · Strømsgodset · d. 1980 · Leder Werners Magasin 1955–80</div>
+        <div class="chip warn">Elisabeth Werner · f. 6. aug 1910 · Strømsgodset — Simens mormor (Sigrid Elisabeth)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cn">Carl Amandus Husbergs søsken (barn av Carl A. Husberg og Anne Margrethe f. Lowum)</div>
+      <div class="chips" style="margin-top:6px;">
+        <div class="chip">Anna Wilhelmine Husberg · f. ca. 1863, Sarpsborg (bekreftet 1865-tellingen)</div>
+        <div class="chip">Ludvig Husberg · f. 27. jun 1869, Sarpsborg</div>
+        <div class="chip">Marthe Fredrikke Husberg · gift Karl I. Nilsen Pharo · 22. okt 1898, Sarpsborg</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cn">Christian Julius og Ingas barn (ni barn)</div>
+      <div class="chips" style="margin-top:6px;">
+        <div class="chip">Karoline Kristine Simensen · f. 1889 · Drammen</div>
+        <div class="chip">Ragna Amanda Simensen · f. 1891 · Drammen</div>
+        <div class="chip">Sigurd Nicolai Simensen · f. og d. 1893 · spedbarnsdød</div>
+        <div class="chip">Haakon Simensen · f. 1894 · Drammen</div>
+        <div class="chip">Harald Simensen · f. 1895 · Drammen</div>
+        <div class="chip">Jenny Simensen · f. 1897 · Drammen</div>
+        <div class="chip">Arne Simensen · f. 1899 · Drammen</div>
+        <div class="chip">Elisabeth Simensen · f. 1904 · Drammen</div>
+        <div class="chip warn">Erling Simensen · f. 1905 · Drammen — Simens morfar</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>Om Hustad-gården og Werners Magasin</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="cn">Hustad-gården, Sandvollan</div>
+      <div class="cd">
+        Gammelt gårdsnavn («hus» + «stad»).<br>
+        To bruk: Hustad øvre (Tørris-linjen) og Hustad vestre (Ole Sivert-linjen).<br>
+        Sandvollan ble egen kommune 1907, slått tilbake til Inderøy 1964.<br>
+        Hustad er også navn på sognet (Sandvollan/Hustad-soknet).
+      </div>
+    </div>
+    <div class="card">
+      <div class="cn">Werners Magasin, Drammen</div>
+      <div class="cd">
+        Grunnlagt 1875 av Eduard Werner (1851–1923).<br>
+        Tollbodgaten 4, Drammen — ca. 50 ansatte på 1930-tallet.<br>
+        Kobber- og blikkenslagerarbeid, signalamper til NSB,<br>
+        lanterner til marinen, glass, steintøy, porselen, keramikk.<br>
+        Drevet av familien i fire generasjoner: Eduard → Ferdinand<br>
+        → Eduard jr. (1903–1955) → Kjell (1909–1980).
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <p class="src">
+    <strong>Kilder (åpne, nettbaserte):</strong><br>
+    Digitalarkivet – Folketelling 1891 Inderøy herred (Tørris Hustads hushold) ·
+    Wikipedia EN: <em>Tormod Kristoffer Hustad</em> ·
+    Wikipedia NO: <em>Tørris Hustad</em>, <em>Peder Konrad Hustad</em> ·
+    KulturNav: Tormod Hustad ·
+    Drammen Byleksikon: <em>Werners Magasin, Eduard</em> ·
+    Lokalhistoriewiki: <em>Erling Simensen</em> ·
+    Geni.com: Advokat Erling Simensen ·
+    Kattabiblioteket: Elever ved Kristiania katedralskole 1881–1890 (hefte 7) ·
+    Wikipedia EN: <em>Jens Andersen Hagen</em> ·
+    Lokalhistoriewiki: <em>Jens Andersen Hagen, Garver Ytteborgs vei</em> ·
+    Sarpsborg Historielag: Døpte og konfirmasjon-registre ·
+    Hemneslekt.net · Geneanet ·
+    <em>Kan inneholde unøyaktigheter — verifiser mot primærkilder (kirkebøker, folketellinger).</em>
+  </p>
+</div>
+
+</body>
+</html>
