@@ -363,6 +363,22 @@ def bygg_nkf_flb_rader() -> list[dict]:
     return rader
 
 
+_NORSK_MAANED = {
+    "januar": "01", "februar": "02", "mars": "03", "april": "04",
+    "mai": "05", "juni": "06", "juli": "07", "august": "08",
+    "september": "09", "oktober": "10", "november": "11", "desember": "12",
+}
+
+def _norsk_til_iso(dato: str) -> str:
+    """Konverter '12. august 2026' → '2026-08-12'."""
+    m = re.match(r"(\d{1,2})\.\s+(\w+)\s+(\d{4})", dato.strip())
+    if not m:
+        return dato
+    dag, maaned, aar = m.groups()
+    mnd = _NORSK_MAANED.get(maaned.lower())
+    return f"{aar}-{mnd}-{dag.zfill(2)}" if mnd else dato
+
+
 def bygg_nfi_rader() -> list[dict]:
     """Bygg v4-rader for NFI-ordninger (Norsk filminstitutt).
 
@@ -427,7 +443,7 @@ def bygg_nfi_rader() -> list[dict]:
         nfi_id = "NFI-" + re.sub(r"[^a-z0-9]+", "-", slug).strip("-")[:40]
 
         meta = nfi_meta.get(gruppe_navn.strip().lower())
-        frister = (meta.get("soknadsfrister") or []) if meta else []
+        frister = [_norsk_til_iso(f) for f in (meta.get("soknadsfrister") or [])] if meta else []
 
         rader.append({
             "id": nfi_id,
@@ -479,7 +495,7 @@ def bygg_nfi_rader() -> list[dict]:
     for meta in nfi_meta.values():
         if meta["navn"].strip().lower() in dekkede:
             continue
-        frister = meta.get("soknadsfrister") or []
+        frister = [_norsk_til_iso(f) for f in (meta.get("soknadsfrister") or [])]
         slug = meta["navn"].lower().replace("æ", "ae").replace("ø", "o").replace("å", "a")
         nfi_id = "NFI-" + re.sub(r"[^a-z0-9]+", "-", slug).strip("-")[:40]
         rader.append({
