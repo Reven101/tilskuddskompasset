@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Rådata og genererte datafiler
+tilskudd_data/*.csv
+tilskudd_data/*.xlsx
+tilskudd_data/*.json
+tilskudd_data/*.html
+
+# Gamle versjoner av nettstedet
+tilskuddskompasset_v*.html
+ordninger_data.js
+ordninger_v3.js
+
+# Claude-konfig
+.claude/
+tilskudd_data/.claude/
