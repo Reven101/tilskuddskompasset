@@ -472,6 +472,61 @@ def bygg_nfi_rader() -> list[dict]:
 
     med_meta = sum(1 for r in rader if r["beskrivelse"])
     print(f"Bygget {len(rader)} NFI-rader ({med_meta} med metadata fra nfi_ordninger.json)")
+
+    # Legg til NFI-ordninger som har frister men ingen tildelingshistorikk ennå
+    dekkede = {r["tittel"].strip().lower() for r in rader}
+    nye = 0
+    for meta in nfi_meta.values():
+        if meta["navn"].strip().lower() in dekkede:
+            continue
+        frister = meta.get("soknadsfrister") or []
+        slug = meta["navn"].lower().replace("æ", "ae").replace("ø", "o").replace("å", "a")
+        nfi_id = "NFI-" + re.sub(r"[^a-z0-9]+", "-", slug).strip("-")[:40]
+        rader.append({
+            "id": nfi_id,
+            "tittel": meta["navn"],
+            "beskrivelse": meta.get("ingress") or None,
+            "forvalter": "Norsk filminstitutt",
+            "forvalter_kort": "NFI",
+            "dep": "Kultur- og likestillingsdepartementet",
+            "typer": ["Prosjektmidler"],
+            "mottakerkategorier": [],
+            "belop": None,
+            "frist": frister[0] if frister else None,
+            "frister": frister,
+            "fristtype": None,
+            "krever_frivillig": False,
+            "grad": None,
+            "soekere": None,
+            "mottakere_n": None,
+            "soknader": None,
+            "innvilget": None,
+            "total_soekt": None,
+            "total_tildelt": None,
+            "typisk_tildeling": None,
+            "ts_tildelt": [],
+            "ts_mottakere": [],
+            "formaal": meta.get("hva_kan_sokes") or None,
+            "hvem": meta.get("hvem_kan_soke") or None,
+            "hva": None,
+            "kriterier": meta.get("vilkaar") or None,
+            "rapportering": None,
+            "hvordan": None,
+            "soknadslenke": meta["url"],
+            "regelverk": meta.get("lovdata_url") or None,
+            "topp_mottakere": [],
+            "fylker": {},
+            "fordeling": None,
+            "konkurranse": None,
+            "avkorting": None,
+            "icnpo": ["Kunst og kultur"],
+            "orgform": ["Privat virksomhet"],
+        })
+        nye += 1
+
+    if nye:
+        print(f"La til {nye} NFI-ordninger uten tildelingshistorikk (kun metadata/frister)")
+
     return rader
 
 

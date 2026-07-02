@@ -349,13 +349,39 @@ def main() -> None:
     # ── Steg 3: Søknadsfrister ───────────────────────────────────────────────
     print("=== Steg 3: Søknadsfrister ===")
     frister_map = hent_frister(opener)
+
+    # Normaliser URL for robust matching (strip trailing slash, lowercase)
+    def norm_url(u: str) -> str:
+        return u.rstrip("/").lower()
+
+    url_til_ordning = {norm_url(o["url"]): o for o in ordninger}
     frister_treff = 0
-    for ordning in ordninger:
-        frister = frister_map.get(ordning["url"], [])
-        ordning["soknadsfrister"] = frister
-        if frister:
+    for raw_url, frister in frister_map.items():
+        ordning = url_til_ordning.get(norm_url(raw_url))
+        if ordning:
+            ordning["soknadsfrister"] = frister
             frister_treff += 1
-    print(f"  {frister_treff} ordninger har kommende frister\n")
+
+    print(f"  {frister_treff} ordninger har kommende frister")
+
+    # Frister-siden kan lenke til ordninger vi ikke fant via kategori-crawl.
+    # Hent disse også så de ikke forsvinner.
+    skrapete_urls = {norm_url(o["url"]) for o in ordninger}
+    ekstra_urls = [u for u in frister_map if norm_url(u) not in skrapete_urls]
+    if ekstra_urls:
+        print(f"  Henter {len(ekstra_urls)} ekstra ordninger kun fra frister-siden …")
+        for url in ekstra_urls:
+            html = hent(opener, url)
+            time.sleep(PAUSE)
+            if not html:
+                print(f"  ! Klarte ikke å laste {url}", file=sys.stderr)
+                continue
+            ordning = parse_ordning_side(html, url)
+            ordning["soknadsfrister"] = frister_map[url]
+            ordninger.append(ordning)
+            print(f"  + {ordning['navn'] or url.split('/')[-1]}")
+
+    print()
 
     # ── Steg 4: Lagre ────────────────────────────────────────────────────────
     json_fil = utmappe / "nfi_ordninger.json"
