@@ -20,7 +20,6 @@ Kjøring:        python hent_bulk_tildelinger.py
 """
 
 import csv
-import json
 import sys
 import time
 from pathlib import Path
@@ -219,13 +218,9 @@ def main():
     skriv_csv(tildelinger, UTMAPPE / "tildelinger_alle.csv")
     skriv_csv(enkelt, UTMAPPE / "enkelttilskudd.csv")
 
-    # JSON (kan bli stor – kompakt format)
-    json_fil = UTMAPPE / "tildelinger_alle.json"
-    json_fil.write_text(
-        json.dumps(tildelinger, ensure_ascii=False, default=str),
-        encoding="utf-8"
-    )
-    print(f"  -> {json_fil} ({json_fil.stat().st_size / 1024 / 1024:.1f} MB)")
+    # JSON-eksport er utelatt – 663k+ rader sprenger minnet ved json.dumps()
+    # og filen brukes ikke av andre skript.
+
 
     # 6. Aggregert statistikk per ordning
     print("\nBeregner statistikk per ordning...")
