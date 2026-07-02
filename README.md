@@ -2,7 +2,7 @@
 
 Finn statlige tilskuddsordninger for frivillige organisasjoner – se hvem som har fått, hvor mye de fikk, og rekk fristen.
 
-Bygget på åpne data fra [tilskudd.no](https://tilskudd.lottstift.no) (Lotteri- og stiftelsestilsynet) og [kulturdirektoratet.no](https://www.kulturdirektoratet.no).
+Bygget på åpne data fra [tilskudd.no](https://tilskudd.lottstift.no) (Lotteri- og stiftelsestilsynet), [kulturdirektoratet.no](https://www.kulturdirektoratet.no) og [nfi.no](https://www.nfi.no).
 
 ---
 
@@ -23,6 +23,8 @@ Bygget på åpne data fra [tilskudd.no](https://tilskudd.lottstift.no) (Lotteri-
 | `hent_bulk_tildelinger.py` | Laster ned tildelinger fra tilskudd.no |
 | `hent_utvidet_data.py` | Henter ordningsmetadata fra tilskudd.no |
 | `hent_kulturdirektoratet_innhold.py` | Skraper mål/formål/frister fra kulturdirektoratet.no |
+| `hent_nfi_tildelinger.py` | Skraper tildelingsdata fra nfi.no |
+| `hent_nfi_ordninger.py` | Skraper ordningsmetadata (frister, beskrivelse) fra nfi.no |
 | `lag_v4_data.py` | Bygger `ordninger_v4.js` fra alle datakilder |
 | `tilskudd_data/bygg_nkf_flb_v2.py` | Renser NKF/FLB-data og bygger innvilgelsesgrad-tabell |
 | `tilskudd_data/hent_brreg_lookup.py` | Slår opp org.nr mot Brønnøysundregisteret |
@@ -66,7 +68,16 @@ Fra `tilskuddskompasset/`:
 python hent_kulturdirektoratet_innhold.py   # Skrape mål/formål/frister (~1 min)
 ```
 
-### 3. Bygg datafil og publiser
+### 3. NFI – Norsk filminstitutt (helautomatisk, ~5 min)
+
+```bash
+python hent_nfi_tildelinger.py         # Skrape tildelinger fra nfi.no (~3 min)
+python hent_nfi_ordninger.py           # Skrape ordningsmetadata fra nfi.no (~1 min)
+```
+
+Produserer `tilskudd_data/nfi_tildelinger_YYYY_YYYY.xlsx` og `tilskudd_data/nfi_ordninger.json`.
+
+### 4. Bygg datafil og publiser
 
 ```bash
 python lag_v4_data.py                  # Genererer ordninger_v4.js (~10 sek)
@@ -84,8 +95,9 @@ Vercel deployer automatisk når du pusher til GitHub.
 
 | Hyppighet | Hva |
 |-----------|-----|
-| Månedlig | Steg 1 + steg 3 (tilskudd.no-data) |
-| Halvårlig | Steg 2 + steg 3 (NKF/FLB-data) |
+| Månedlig | Steg 1 + steg 4 (tilskudd.no-data) |
+| Halvårlig | Steg 2 + steg 4 (NKF/FLB-data) |
+| Halvårlig | Steg 3 + steg 4 (NFI-data) |
 
 ---
 

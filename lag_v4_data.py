@@ -13,6 +13,7 @@ Kjøring: python lag_v4_data.py
 
 import csv
 import json
+import re
 import statistics
 from collections import defaultdict
 from datetime import date
@@ -362,6 +363,118 @@ def bygg_nkf_flb_rader() -> list[dict]:
     return rader
 
 
+def bygg_nfi_rader() -> list[dict]:
+    """Bygg v4-rader for NFI-ordninger (Norsk filminstitutt).
+
+    Tildelingsdata er gruppert per ordning (fra nfi_tildelinger Excel).
+    Ordningsmetadata (frister, beskrivelse, søknadslenke) kommer fra
+    nfi_ordninger.json (bygget av hent_nfi_ordninger.py).
+    Ingen avslagsdata → ingen innvilgelsesgrad.
+    """
+    excel_fil = Path("tilskudd_data/nfi_tildelinger_2020_juni2026.xlsx")
+    ordninger_fil = Path("tilskudd_data/nfi_ordninger.json")
+    if not excel_fil.exists():
+        print("Hopper over NFI: nfi_tildelinger_2020_juni2026.xlsx ikke funnet")
+        return []
+
+    df = pd.read_excel(excel_fil, sheet_name="nfi_tildelinger")
+    # Kun positive tildelinger (tildelt_kr er alltid positiv; tildelt_raa kan ha korreksjoner)
+    df = df[df["tildelt_kr"].notna() & (df["tildelt_kr"] > 0)].copy()
+    df["aar"] = pd.to_numeric(df["aar"], errors="coerce")
+    df = df[df["aar"].notna() & (df["aar"] <= 2026)].copy()
+
+    # Ordningsmetadata fra nfi_ordninger.json (hent_nfi_ordninger.py)
+    nfi_meta = {}
+    if ordninger_fil.exists():
+        for o in json.loads(ordninger_fil.read_text(encoding="utf-8")):
+            nfi_meta[o["navn"].strip().lower()] = o
+
+    # Grupper per ordning der mulig, ellers per omraade
+    def get_gruppe(row):
+        if pd.notna(row["ordning"]) and str(row["ordning"]).strip():
+            return str(row["ordning"]).strip()
+        omraade = str(row["omraade"]).strip() if pd.notna(row["omraade"]) else "Ukjent"
+        return f"Øvrige {omraade}"
+
+    df["_gruppe"] = df.apply(get_gruppe, axis=1)
+
+    rader = []
+    for gruppe_navn, sub in df.groupby("_gruppe"):
+        siste_aar = int(sub["aar"].max())
+        sub_siste = sub[sub["aar"] == siste_aar]
+
+        sortert = sub_siste.sort_values("tildelt_kr", ascending=False).head(8)
+        topp_mottakere = [{
+            "n": str(r["soeker"]) if pd.notna(r["soeker"]) else "",
+            "t": int(r["tildelt_kr"]),
+            "s": None,
+            "tiltak": str(r["tittel"])[:100] if pd.notna(r["tittel"]) else "",
+            "f": "",
+        } for _, r in sortert.iterrows()]
+
+        ts_df = sub.groupby("aar")
+        ts_tildelt = [{"x": str(int(aar)), "y": int(g["tildelt_kr"].sum())} for aar, g in ts_df]
+        ts_mottakere = [{"x": str(int(aar)), "y": int(g["soeker"].nunique())} for aar, g in ts_df]
+
+        belop_siste = sub_siste["tildelt_kr"].tolist()
+        fordeling = beloepfordeling(belop_siste)
+
+        mottakere_n = int(sub_siste["soeker"].nunique())
+        total_siste = int(sub_siste["tildelt_kr"].sum())
+        typisk = round(total_siste / mottakere_n) if mottakere_n else None
+
+        slug = gruppe_navn.lower().replace("æ", "ae").replace("ø", "o").replace("å", "a")
+        nfi_id = "NFI-" + re.sub(r"[^a-z0-9]+", "-", slug).strip("-")[:40]
+
+        meta = nfi_meta.get(gruppe_navn.strip().lower())
+        frister = (meta.get("soknadsfrister") or []) if meta else []
+
+        rader.append({
+            "id": nfi_id,
+            "tittel": gruppe_navn,
+            "beskrivelse": meta.get("ingress") if meta else None,
+            "forvalter": "Norsk filminstitutt",
+            "forvalter_kort": "NFI",
+            "dep": "Kultur- og likestillingsdepartementet",
+            "typer": ["Prosjektmidler"],
+            "mottakerkategorier": [],
+            "belop": None,
+            "frist": frister[0] if frister else None,
+            "frister": frister,
+            "fristtype": None,
+            "krever_frivillig": False,
+            "grad": None,
+            "soekere": None,
+            "mottakere_n": mottakere_n or None,
+            "soknader": None,
+            "innvilget": None,
+            "total_soekt": None,
+            "total_tildelt": total_siste,
+            "typisk_tildeling": typisk,
+            "ts_tildelt": ts_tildelt,
+            "ts_mottakere": ts_mottakere,
+            "formaal": meta.get("hva_kan_sokes") if meta else None,
+            "hvem": meta.get("hvem_kan_soke") if meta else None,
+            "hva": None,
+            "kriterier": meta.get("vilkaar") if meta else None,
+            "rapportering": None,
+            "hvordan": None,
+            "soknadslenke": meta["url"] if meta else None,
+            "regelverk": meta.get("lovdata_url") if meta else None,
+            "topp_mottakere": topp_mottakere,
+            "fylker": {},
+            "fordeling": fordeling,
+            "konkurranse": None,
+            "avkorting": None,
+            "icnpo": ["Kunst og kultur"],
+            "orgform": ["Privat virksomhet"],
+        })
+
+    med_meta = sum(1 for r in rader if r["beskrivelse"])
+    print(f"Bygget {len(rader)} NFI-rader ({med_meta} med metadata fra nfi_ordninger.json)")
+    return rader
+
+
 def lag_v4_data():
     # Les ordninger_utvidet
     ordninger_fil = Path("tilskudd_data/ordninger_utvidet.json")
@@ -491,6 +604,9 @@ def lag_v4_data():
 
     # NKF/FLB-ordninger (Kulturråd/Fond for lyd og bilde) - egen kilde, ikke i ordninger_utvidet.json
     rader.extend(bygg_nkf_flb_rader())
+
+    # NFI-ordninger (Norsk filminstitutt) - egen kilde, ikke i ordninger_utvidet.json
+    rader.extend(bygg_nfi_rader())
 
     # Skriv ut
     ut = Path("ordninger_v4.js")
