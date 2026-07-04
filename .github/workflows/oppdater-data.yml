@@ -1,0 +1,86 @@
+# Månedlig, automatisk oppdatering av Tilskuddskompassets data.
+#
+# Hva den gjør (tilsvarer «Månedlig»-raden i README-en):
+#   1. Henter datagrunnlaget (de halvårlige, manuelt bygde filene) fra
+#      GitHub-releasen med tag «data-grunnlag»
+#   2. Henter ferske tilskudd.no-data og skraper frister/formål fra
+#      kulturdirektoratet.no
+#   3. Bygger ordninger_v4.js og kontrollerer at den ser sunn ut
+#   4. Committer og pusher — Vercel deployer automatisk
+#
+# Førstegangsoppsett og halvårlig vedlikehold: se «Automatisk
+# oppdatering» i README.md.
+
+name: Oppdater tilskuddsdata
+
+on:
+  schedule:
+    - cron: "17 4 2 * *"   # kl. 04:17 UTC den 2. hver måned
+  workflow_dispatch: {}     # og når som helst manuelt fra Actions-fanen
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oppdater-data
+  cancel-in-progress: false
+
+jobs:
+  oppdater:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Sjekk ut repoet
+        uses: actions/checkout@v4
+
+      - name: Hent datagrunnlaget fra releasen «data-grunnlag»
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download data-grunnlag --pattern "tilskudd_data.zip" --output tilskudd_data.zip
+          mkdir -p tilskudd_data
+          unzip -o tilskudd_data.zip -d tilskudd_data
+          # tåler at zip-en ble pakket med mappen som rot
+          if [ -d tilskudd_data/tilskudd_data ]; then
+            mv tilskudd_data/tilskudd_data/* tilskudd_data/
+            rmdir tilskudd_data/tilskudd_data
+          fi
+          echo "Datagrunnlag på plass:"
+          ls -la tilskudd_data/ | head -25
+
+      - name: Sett opp Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer avhengigheter
+        run: pip install -r requirements-pipeline.txt
+
+      - name: Hent tildelinger fra tilskudd.no
+        run: python hent_bulk_tildelinger.py
+
+      - name: Hent ordningsmetadata fra tilskudd.no (~15 min)
+        run: python hent_utvidet_data.py
+
+      - name: Skrap frister og formål fra kulturdirektoratet.no
+        run: python hent_kulturdirektoratet_innhold.py
+
+      - name: Bygg ordninger_v4.js
+        run: python lag_v4_data.py
+
+      - name: Kontroller at den nye datafilen er sunn
+        run: python ci/kontroller_v4.py
+
+      - name: Commit og push hvis dataene er endret
+        run: |
+          if git diff --quiet -- ordninger_v4.js; then
+            echo "Ingen endringer i ordninger_v4.js — ingenting å publisere."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ordninger_v4.js
+          git commit -m "Oppdater data (automatisk månedlig kjøring)"
+          git push

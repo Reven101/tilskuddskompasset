@@ -1,0 +1,5 @@
+# Avhengigheter for datapipelinen (brukes lokalt og av GitHub Actions)
+requests
+beautifulsoup4
+openpyxl
+pandas
