@@ -45,7 +45,7 @@ TOPP_N = 25  # forvaltere i terminaltabellen (CSV-en får alle)
 def finn_aktornavn(dok: dict) -> list[str]:
     """Aktørnavn fra et Kudos-dokument, uansett hvilken form v0 bruker."""
     navn: list[str] = []
-    for nokkel in ("actors", "aktorer", "organizations", "publishers"):
+    for nokkel in ("actors", "aktorer", "organizations", "publishers", "owners"):
         for aktor in dok.get(nokkel) or []:
             if isinstance(aktor, dict):
                 for felt in ("name", "navn", "actor_name", "organization_name"):
