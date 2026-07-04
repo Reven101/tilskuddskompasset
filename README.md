@@ -95,9 +95,37 @@ Vercel deployer automatisk når du pusher til GitHub.
 
 | Hyppighet | Hva |
 |-----------|-----|
-| Månedlig | Steg 1 + steg 4 (tilskudd.no-data) |
-| Halvårlig | Steg 2 + steg 4 (NKF/FLB-data) |
-| Halvårlig | Steg 3 + steg 4 (NFI-data) |
+| Månedlig | **Automatisk** via GitHub Actions (se under) — tilsvarer steg 1 + 4 |
+| Halvårlig | Steg 2 + steg 4 (NKF/FLB-data) + oppdater `data-grunnlag`-releasen |
+| Halvårlig | Steg 3 + steg 4 (NFI-data) + oppdater `data-grunnlag`-releasen |
+
+## Automatisk oppdatering (GitHub Actions)
+
+Workflowen [.github/workflows/oppdater-data.yml](.github/workflows/oppdater-data.yml)
+kjører den månedlige rutinen uten deg, natt til den 2. hver måned:
+henter ferske tilskudd.no-data, skraper frister fra kulturdirektoratet.no,
+bygger `ordninger_v4.js`, kontrollerer at den er sunn
+(`ci/kontroller_v4.py` — minst 250 ordninger, bygget i dag), og pusher.
+Vercel deployer som vanlig. Går kontrollen ikke gjennom, publiseres
+ingenting — nettsiden beholder forrige versjon.
+
+De halvårlige, manuelt bygde filene (NKF/FLB-CSV-ene, NFI-filene og
+`tildelinger_samlet_2021_2026.csv`) er for store for git og ligger bare
+på din maskin. Workflowen henter dem derfor fra en GitHub-release:
+
+**Førstegangsoppsett (én gang):**
+
+1. Pakk innholdet i `tilskudd_data/` til en zip:
+   `cd tilskudd_data && zip -r ../tilskudd_data.zip *.csv *.json *.xlsx`
+2. På GitHub: Releases → «Draft a new release» → tag `data-grunnlag` →
+   dra `tilskudd_data.zip` inn som vedlegg → «Publish release»
+3. Actions-fanen → «Oppdater tilskuddsdata» → «Run workflow» — sjekk at
+   testkjøringen blir grønn
+
+**Halvårlig vedlikehold:** etter den manuelle NKF/FLB- eller NFI-rutinen,
+bygg ny zip (punkt 1) og last den opp på nytt på `data-grunnlag`-releasen
+(slett det gamle vedlegget først). Selve cron-kjøringen krever at
+workflow-filen ligger på main-grenen.
 
 ---
 
