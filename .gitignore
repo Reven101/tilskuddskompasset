@@ -9,6 +9,9 @@ tilskudd_data/*.xlsx
 tilskudd_data/*.json
 tilskudd_data/*.html
 
+# Zip til data-grunnlag-releasen (bygges av lag_datagrunnlag_zip.py)
+tilskudd_data.zip
+
 # Gamle versjoner av nettstedet
 tilskuddskompasset_v*.html
 ordninger_data.js
