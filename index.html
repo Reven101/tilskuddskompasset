@@ -245,6 +245,10 @@ footer .mono{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spaci
       <div class="filterrow" id="hvaChips" role="group" aria-label="Hva skal pengene brukes til"></div>
     </div>
     <div class="avansert-gruppe">
+      <span class="filter-label">Finansiering</span>
+      <div class="filterrow" id="finansieringChips" role="group" aria-label="Hvor pengene kommer fra"></div>
+    </div>
+    <div class="avansert-gruppe">
       <span class="filter-label">Beløpsstørrelse <span class="filter-hint">(velg én)</span></span>
       <div class="filterrow" id="belopChips" role="group" aria-label="Beløpsstørrelse"></div>
     </div>
@@ -392,7 +396,7 @@ let kunApne=true;
 function erApen(o){
   return utenFrist(o)||nesteFrist(o.frister)!=null||nyligUtloept(o)!=null;
 }
-let valgtFagfelt=new Set(),valgtOrgform=new Set(),valgtHva=new Set(),valgtBelop=null;
+let valgtFagfelt=new Set(),valgtOrgform=new Set(),valgtHva=new Set(),valgtBelop=null,valgtFinansiering=new Set();
 
 // ===== FILTER-LOGIKK =====
 const FAGFELT_ICNPO={
@@ -402,6 +406,14 @@ const FAGFELT_ICNPO={
   "Sosial og inkludering":["Sosiale tjenester","Mangfold og inkludering","Krisehjelp og støttearbeid","Økonomisk og materiell støtte"],
   "Natur og miljø":["Natur- og miljøvern","Dyrevern"],
   "Lokalsamfunn og demokrati":["Lokalsamfunnsutvikling","Interesseorganisasjoner","Tros- og livssynsorganisasjoner","Bolig- og lokalmiljø","Frivillighetssentraler"],
+};
+
+// Spillemidler er Norsk Tippings overskudd, ikke statsbudsjettet. Skillet er
+// verdt et eget filter: det er reelt for hvem som forvalter og hvilke regler
+// som gjelder.
+const FINANSIERING_NOKKEL={
+  "Statsbudsjettet":"statsbudsjettet",
+  "Spillemidler":"spillemidler",
 };
 
 const ORGFORM_GRUPPER={
@@ -466,6 +478,14 @@ function matcherVeiviser(o){
     const v=o.typisk_tildeling??o.belop;
     if(v!=null&&!BELOP_GRUPPER[valgtBelop](v))return false;
   }
+  if(valgtFinansiering.size){
+    // «Statsbudsjettet og spillemidler» skal treffe begge chipsene, derfor
+    // delstrengsjekk framfor likhet. Ordninger uten tildelingshistorikk har
+    // ingen finansiering utledet, og filtreres bort her - vi vet ikke.
+    const f=(o.finansiering||"").toLowerCase();
+    if(!f)return false;
+    if(![...valgtFinansiering].some(g=>f.includes(FINANSIERING_NOKKEL[g])))return false;
+  }
   return true;
 }
 
@@ -501,6 +521,12 @@ lagChipKnapper("hvaChips",Object.keys(HVA_GRUPPER)).addEventListener("click",e=>
   else{valgtHva.add(b.dataset.v);b.classList.add("active");b.setAttribute("aria-pressed","true");}
   render();
 });
+lagChipKnapper("finansieringChips",Object.keys(FINANSIERING_NOKKEL)).addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b)return;
+  if(valgtFinansiering.has(b.dataset.v)){valgtFinansiering.delete(b.dataset.v);b.classList.remove("active");b.setAttribute("aria-pressed","false");}
+  else{valgtFinansiering.add(b.dataset.v);b.classList.add("active");b.setAttribute("aria-pressed","true");}
+  render();
+});
 lagChipKnapper("belopChips",Object.keys(BELOP_GRUPPER)).addEventListener("click",e=>{
   const b=e.target.closest(".chip");if(!b)return;
   const erAktiv=b.classList.contains("active");
@@ -510,8 +536,8 @@ lagChipKnapper("belopChips",Object.keys(BELOP_GRUPPER)).addEventListener("click"
   render();
 });
 document.getElementById("veiviserNullstill").addEventListener("click",()=>{
-  valgtFagfelt.clear();valgtOrgform.clear();valgtHva.clear();valgtBelop=null;
-  document.querySelectorAll("#fagfeltChips .chip,#orgformChips .chip,#hvaChips .chip,#belopChips .chip").forEach(c=>{c.classList.remove("active");c.setAttribute("aria-pressed","false");});
+  valgtFagfelt.clear();valgtOrgform.clear();valgtHva.clear();valgtBelop=null;valgtFinansiering.clear();
+  document.querySelectorAll("#fagfeltChips .chip,#orgformChips .chip,#hvaChips .chip,#belopChips .chip,#finansieringChips .chip").forEach(c=>{c.classList.remove("active");c.setAttribute("aria-pressed","false");});
   render();
 });
 
@@ -771,10 +797,10 @@ document.getElementById("liste").addEventListener("click",e=>{
 });
 document.getElementById("nullstillAlle").addEventListener("click",()=>{
   soketekst="";valgtType="alle";valgtDep="alle";valgtFrist="alle";valgtFylke="alle";sortering="frist";kunApne=true;
-  valgtFagfelt.clear();valgtOrgform.clear();valgtHva.clear();valgtBelop=null;
+  valgtFagfelt.clear();valgtOrgform.clear();valgtHva.clear();valgtBelop=null;valgtFinansiering.clear();
   document.getElementById("sok").value="";
   document.querySelectorAll("#typeChips .chip").forEach(c=>{const aktiv=c.dataset.v==="alle";c.classList.toggle("active",aktiv);c.setAttribute("aria-pressed",aktiv?"true":"false");});
-  document.querySelectorAll("#fagfeltChips .chip,#orgformChips .chip,#hvaChips .chip,#belopChips .chip").forEach(c=>{c.classList.remove("active");c.setAttribute("aria-pressed","false");});
+  document.querySelectorAll("#fagfeltChips .chip,#orgformChips .chip,#hvaChips .chip,#belopChips .chip,#finansieringChips .chip").forEach(c=>{c.classList.remove("active");c.setAttribute("aria-pressed","false");});
   document.getElementById("kunApneToggle").checked=true;
   depSel.value="alle";document.getElementById("fristVelger").value="alle";fylkeSel.value="alle";
   document.getElementById("sortVelger").value="frist";
