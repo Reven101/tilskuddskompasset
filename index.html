@@ -124,8 +124,14 @@ details.krav-details .felt-tekst:last-child{margin-bottom:0}
 
 /* Sparkline */
 .sparkline-wrap{margin:10px 0 14px}
-.sparkline-label{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;color:#6B756D;margin-bottom:5px}
-.sparkline{display:flex;align-items:flex-end;gap:3px;height:36px}
+/* display:block - som inline-span ble margin-bottom ignorert, så tittelen lå
+   klistret inntil søylene. */
+.sparkline-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;color:#6B756D;margin-bottom:5px}
+/* Høyden må rumme både søylene (34px) og årstallene under (padding-bottom):
+   med border-box trakk de 16px fra innholdsboksen, så søylene overskjøt
+   oppover og la seg over tittelen. margin-top gir plass til verditipset, som
+   ligger 20px over søyletoppen. */
+.sparkline{display:flex;align-items:flex-end;gap:3px;height:52px;padding-bottom:16px;margin-top:22px}
 .sparkline .bar{background:var(--spruce);border-radius:2px 2px 0 0;flex:1;min-width:10px;position:relative;transition:background .15s;cursor:pointer}
 .sparkline .bar:hover,.sparkline .bar.vist{background:var(--mustard)}
 .sparkline .bar::after{content:attr(data-label);position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#6B756D;white-space:nowrap}
@@ -274,7 +280,22 @@ footer .mono{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spaci
 const MND=["","jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
 const MND_FULL=["","januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
 const fmtKr=n=>n==null?"–":new Intl.NumberFormat("nb-NO",{maximumFractionDigits:0}).format(n)+" kr";
-const fmtKort=n=>{if(n==null)return"–";if(n>=1e6)return(n/1e6).toFixed(1).replace(".0","")+" mill";if(n>=1e3)return Math.round(n/1e3)+"k";return n+"";};
+// Norsk desimalskilletegn er komma. toFixed gir alltid punktum, uavhengig av
+// locale, så det må byttes eksplisitt - fmtKr slipper unna fordi
+// Intl.NumberFormat("nb-NO") gjør det selv.
+const fmtKort=n=>{
+  if(n==null)return"–";
+  const komma=v=>v.toFixed(1).replace(".0","").replace(".",",");
+  // Grensene ligger der visningen ellers ville tippet over til neste enhet:
+  // uten dem blir 999 999 til «1000k» og 3,1 mrd til «3079 mill».
+  if(n>=999.5e6)return komma(n/1e9)+" mrd";
+  if(n>=999.5e3)return komma(n/1e6)+" mill";
+  // Under 10 000 blir heltallsavrunding grov (1 500 -> «2k»), så der beholder
+  // vi én desimal. Over det er tallet stort nok til at desimalen er støy.
+  if(n>=1e4)return Math.round(n/1e3)+"k";
+  if(n>=1e3)return komma(n/1e3)+"k";
+  return n+"";
+};
 const escHTML=s=>s?s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"):"";
 const escAttr=s=>s?s.replace(/&/g,"&amp;").replace(/"/g,"&quot;"):"";
 const trunkert=(s,m)=>{if(!s)return"";return s.length<=m?s:s.slice(0,m).replace(/\s\S*$/,"")+" …";};
@@ -348,7 +369,7 @@ function sparkHTML(serie,label){
   if(!serie||serie.length<2)return"";
   const vals=serie.map(p=>p.y),mx=Math.max(...vals)||1;
   const bars=serie.map(p=>`<div class="bar" style="height:${Math.max(3,Math.round(p.y/mx*34))}px" data-label="'${p.x.slice(-2)}"><span class="tip">${fmtKort(p.y)}</span></div>`).join("");
-  return`<div class="sparkline-wrap"><span class="sparkline-label">${label}</span><div class="sparkline" style="padding-bottom:16px">${bars}</div></div>`;
+  return`<div class="sparkline-wrap"><span class="sparkline-label">${label}</span><div class="sparkline">${bars}</div></div>`;
 }
 
 // ===== BOX PLOT =====
