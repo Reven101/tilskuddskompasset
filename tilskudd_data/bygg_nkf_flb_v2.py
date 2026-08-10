@@ -58,9 +58,14 @@ kode_til_navn.update({
     "KUL-FMN": "Faglige museumsnettverk - treårig",
     "NKF-UKA": "Utviklingstiltak for kulturaktører",
     "NKF-FSV": "Scenekunst – etablerte virksomheter",
+    # Identifisert av Kulturdirektoratet august 2026. Navnene må skrives
+    # nøyaktig som sidetittelen på kulturdirektoratet.no, ellers finner ikke
+    # lag_v4_data.py innholdet, og ordningen blir stående uten frist og formål.
+    "NKF-IBK": "Musikk og scenekunst – internasjonalt bærekraftprogram",
+    "KUL-IND": "Insentivordning for ny dramatikk",
 })
-# KUL-DATA, KUL-IND og NKF-IBK er fortsatt uidentifiserte - vi fant ingen
-# ordningsside som matcher tiltakene deres trygt nok til å gi dem et navn.
+# KUL-DATA er fortsatt uidentifisert - vi fant ingen ordningsside som matcher
+# tiltakene trygt nok til å gi den et navn.
 
 df21_h = pd.DataFrame({
     "tilskuddsforvalter": df21["tilskuddsforvalter"],
@@ -153,12 +158,22 @@ navn_lookup = pd.concat([
     df24_h[["mottakernavn", "mottaker_organisasjonsnummer"]],
 ]).dropna(subset=["mottaker_organisasjonsnummer"])
 navn_lookup["navn_upper"] = navn_lookup["mottakernavn"].str.upper().str.strip()
-navn_til_orgnr = navn_lookup.drop_duplicates("navn_upper").set_index("navn_upper")["mottaker_organisasjonsnummer"]
+# 2021-23 kommer fra Excel med orgnr som heltall, 2024-26 fra CSV som tekst.
+# Uten normalisering her blir oppslaget en blanding av int og str, og et treff
+# fra Excel-siden gir et heltall som ikke kan skrives inn i tekstkolonnen.
+navn_lookup["orgnr_tekst"] = (
+    navn_lookup["mottaker_organisasjonsnummer"].astype("string").str.replace(r"\.0$", "", regex=True)
+)
+navn_til_orgnr = navn_lookup.drop_duplicates("navn_upper").set_index("navn_upper")["orgnr_tekst"]
 
 mangler_orgnr = df24_h["mottakernavn"].str.contains(r"\(Innvilget Deltakelse\)", na=False) & df24_h["mottaker_organisasjonsnummer"].isna()
 navn_uten_suffiks = df24_h.loc[mangler_orgnr, "mottakernavn"].str.replace(r"\s*\(Innvilget Deltakelse\)", "", regex=True).str.strip().str.upper()
 funnet_orgnr = navn_uten_suffiks.map(navn_til_orgnr)
-df24_h.loc[mangler_orgnr, "mottaker_organisasjonsnummer"] = funnet_orgnr
+# Skriv kun radene som faktisk fikk treff. Å skrive hele serien tilbake ville
+# lagt NaN over NaN for bomskuddene - et null-operativ i pandas 2, men en
+# TypeError i pandas 3, som ikke godtar NaN i en str-kolonne.
+treff = funnet_orgnr.notna()
+df24_h.loc[funnet_orgnr.index[treff], "mottaker_organisasjonsnummer"] = funnet_orgnr[treff]
 print(f"\n'(Innvilget Deltakelse)'-rader: fylte inn orgnr for {funnet_orgnr.notna().sum()} av {mangler_orgnr.sum()} via navnematch")
 
 # ============================================================ Slå sammen
