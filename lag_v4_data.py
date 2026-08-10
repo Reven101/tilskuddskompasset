@@ -386,6 +386,33 @@ def _norsk_til_iso(dato: str) -> str:
     return f"{aar}-{mnd}-{dag.zfill(2)}" if mnd else dato
 
 
+def _nfi_fristtype(meta: dict | None, frister: list[str]) -> str | None:
+    """Avgjør fristtype for en NFI-ordning.
+
+    NFIs fristkalender (nfi.no/soeknadsfrister) lister bare ordninger med dato,
+    så løpende ordninger er usynlige der. Uten dette ble alle NFI-rader stående
+    med fristtype=None, og «vis kun åpne»-filteret skjulte dem - inkludert
+    ordninger som Manusutvikling fiksjon og Idéfordypning, som tar imot
+    søknader hele året. De var da heller ikke søkbare på nettsiden.
+
+    Rangering etter hvor sikre vi er:
+      DEADLINE     - vi har en konkret dato fra fristkalenderen
+      NO_DEADLINE  - ordningssiden sier selv «behandles løpende», ELLER siden
+                     finnes på nfi.no uten at noen dato er oppgitt noe sted.
+                     NFIs egen søkeroversikt viser at 31 av 35 åpne
+                     søknadsrunder er løpende, så fravær av dato er et sterkt
+                     signal - men det er en slutning, ikke en påstand fra
+                     kilden. Derfor sier UI-teksten «ingen frist oppgitt på
+                     nfi.no», ikke «løpende».
+      None         - ingen ordningsside (samleposter), vi vet ingenting.
+    """
+    if frister:
+        return "DEADLINE"
+    if meta is None:
+        return None
+    return "NO_DEADLINE"
+
+
 def bygg_nfi_rader() -> list[dict]:
     """Bygg v4-rader for NFI-ordninger (Norsk filminstitutt).
 
@@ -485,7 +512,12 @@ def bygg_nfi_rader() -> list[dict]:
             "belop": None,
             "frist": frister[0] if frister else None,
             "frister": frister,
-            "fristtype": None,
+            "fristtype": _nfi_fristtype(meta, frister),
+            # NFIs egen formulering om frist, når den finnes. Ofte det eneste
+            # konkrete en søker får ("I 2026 åpner vi for nye søknader
+            # 1. februar"), og alltid bedre enn vår slutning.
+            "frist_notat": ((meta.get("frist_tekst") or meta.get("frist_notat") or None)
+                            if meta else None),
             "krever_frivillig": False,
             "grad": None,
             "soekere": None,
@@ -538,7 +570,12 @@ def bygg_nfi_rader() -> list[dict]:
             "belop": None,
             "frist": frister[0] if frister else None,
             "frister": frister,
-            "fristtype": None,
+            "fristtype": _nfi_fristtype(meta, frister),
+            # NFIs egen formulering om frist, når den finnes. Ofte det eneste
+            # konkrete en søker får ("I 2026 åpner vi for nye søknader
+            # 1. februar"), og alltid bedre enn vår slutning.
+            "frist_notat": ((meta.get("frist_tekst") or meta.get("frist_notat") or None)
+                            if meta else None),
             "krever_frivillig": False,
             "grad": None,
             "soekere": None,

@@ -716,7 +716,13 @@ function tabTall(o){
 function tabSok(o,frist){
   let h="";
   if(frist){const dg=dagerTil(frist);h+=`<p class="felt-tekst" style="font-size:1rem">Neste frist: <strong>${frist.getDate()}. ${MND_FULL[frist.getMonth()+1]} ${frist.getFullYear()}</strong> – om ${dg} dager.</p>`;}
-  else if(utenFrist(o))h+=`<p class="felt-tekst" style="font-size:1rem"><strong>Ingen søknadsfrist er oppgitt</strong> på ${kildeNavn(o)}. Sjekk ordningssiden – mange slike ordninger tar imot søknader løpende.</p>`;
+  else if(utenFrist(o)){
+    // Kildens egen formulering slår vår slutning: sier NFI «behandles løpende»
+    // eller «vi åpner for nye søknader 1. februar», er det det brukeren skal lese.
+    h+=o.frist_notat
+      ? `<p class="felt-tekst" style="font-size:1rem"><strong>${escHTML(o.frist_notat)}</strong><br><span style="color:#6B756D">Oppgitt på ${kildeNavn(o)}.</span></p>`
+      : `<p class="felt-tekst" style="font-size:1rem"><strong>Ingen søknadsfrist er oppgitt</strong> på ${kildeNavn(o)}. Sjekk ordningssiden – mange slike ordninger tar imot søknader løpende.</p>`;
+  }
   else{
     const utl=nyligUtloept(o);
     if(utl)h+=`<p class="felt-tekst" style="font-size:1rem">Siste kjente frist var <strong>${utl.getDate()}. ${MND_FULL[utl.getMonth()+1]} ${utl.getFullYear()}</strong>, og den er passert. Ordningen er som regel årlig, men neste frist er ikke kunngjort i dataene våre – sjekk ordningssiden.</p>`;

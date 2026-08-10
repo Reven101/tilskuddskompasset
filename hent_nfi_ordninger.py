@@ -224,6 +224,18 @@ def parse_ordning_side(html: str, url: str) -> dict:
     portal_m = re.search(r'href="(https://tilskudd\.nfi\.no[^"]*)"', html)
     soknadsportal_url = portal_m.group(1) if portal_m else ""
 
+    # Søknadsinformasjon-kortet i høyre marg. Fristkalenderen (steg 3) har bare
+    # ordninger med dato, så løpende ordninger er usynlige der - men flere av
+    # dem sier det rett ut her ("Søknader til denne ordningen behandles
+    # løpende"). Notatet under er dessuten konkret hjelp for en søker selv når
+    # ingen dato finnes ("I 2026 åpner vi for nye søknader 1. februar").
+    frist_tekst = _tekst(m.group(1)) if (
+        m := re.search(r'<div data-application-dates>(.*?)</div>', html, re.DOTALL)
+    ) else ""
+    frist_notat = _tekst(m.group(1)) if (
+        m := re.search(r'<div[^>]*data-notice>(.*?)</div>\s*</div>', html, re.DOTALL)
+    ) else ""
+
     return {
         "navn":               navn,
         "url":                url,
@@ -236,6 +248,8 @@ def parse_ordning_side(html: str, url: str) -> dict:
         "saksbehandlingstid": saksbeh,
         "lovdata_url":        lovdata_url,
         "soknadsportal_url":  soknadsportal_url,
+        "frist_tekst":        frist_tekst,
+        "frist_notat":        frist_notat,
         "soknadsfrister":     [],   # fylles ut i steg 3
     }
 
@@ -413,7 +427,7 @@ def main() -> None:
     print(f"\nFelter med innhold:")
     for felt in ["ingress", "hvem_kan_soke", "hva_kan_sokes", "vilkaar",
                  "prioritering", "saksbehandlingstid", "lovdata_url",
-                 "soknadsportal_url"]:
+                 "soknadsportal_url", "frist_tekst", "frist_notat"]:
         n = sum(1 for o in ordninger if o.get(felt))
         print(f"  {felt:<30} {n:3d} / {len(ordninger)}")
 
