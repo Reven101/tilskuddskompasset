@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Sjekk ut repoet
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Hent datagrunnlaget fra releasen «data-grunnlag»
         env:
@@ -50,10 +50,14 @@ jobs:
           ls -la tilskudd_data/ | head -25
 
       - name: Sett opp Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
+          # Avhengighetsfila heter ikke requirements.txt, og uten denne linja
+          # leter cachen bare etter requirements.txt/pyproject.toml, finner
+          # ingenting og feiler hele steget.
+          cache-dependency-path: requirements-pipeline.txt
 
       - name: Installer avhengigheter
         run: pip install -r requirements-pipeline.txt
