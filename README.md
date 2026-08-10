@@ -29,8 +29,10 @@ Bygget på åpne data fra [tilskudd.no](https://tilskudd.lottstift.no) (Lotteri-
 | `tilskudd_data/bygg_nkf_flb_v2.py` | Renser NKF/FLB-data og bygger innvilgelsesgrad-tabell |
 | `tilskudd_data/hent_brreg_lookup.py` | Slår opp org.nr mot Brønnøysundregisteret |
 | `tilskudd_data/berik_nkf_flb_brreg.py` | Beriker NKF/FLB-data med Brreg-info |
-| `tilskudd_data/rens_tildelinger.py` | Renser råtildelinger (for egen analyse) |
-| `tilskudd_data/slaa_sammen_hoveddatasett.py` | Samler alt til ett analysedatasett |
+| `tilskudd_data/slaa_sammen_hoveddatasett.py` | **Påkrevd:** slår tilskudd.no- og NKF/FLB-tildelingene sammen til `tildelinger_samlet_2021_2026.csv`, som er filen `lag_v4_data.py` faktisk leser |
+| `tilskudd_data/rens_tildelinger.py` | Renser råtildelinger (kun for egen analyse i Python/Excel) |
+| `tilskudd_data/fyll_icnpo.py` | Fyller ICNPO-kategori der ordningsnavnet er entydig (kun for egen analyse) |
+| `ci/kontroller_v4.py` | Kontrollerer `ordninger_v4.js` før publisering (kjøres av GitHub Actions) |
 
 ### Ikke i repoet (genereres/lastes ned lokalt)
 Rådata i `tilskudd_data/` (CSV, Excel, JSON) er ekskludert via `.gitignore` — de er enten for store for GitHub eller kan regenereres ved å kjøre pipeline-en.
@@ -79,8 +81,17 @@ Produserer `tilskudd_data/nfi_tildelinger_YYYY_YYYY.xlsx` og `tilskudd_data/nfi_
 
 ### 4. Bygg datafil og publiser
 
+`lag_v4_data.py` leser `tilskudd_data/tildelinger_samlet_2021_2026.csv` — ikke
+`tildelinger_alle.csv` direkte. Hopper du over sammenslåingen, bygges nettsiden på forrige
+kjørings tildelingsdata: nøkkeltallene blir ferske, mens mottakertabeller, fylkesfordeling
+og konkurransetall står stille under dagens dato.
+
 ```bash
+cd tilskudd_data
+python slaa_sammen_hoveddatasett.py    # Slår sammen tildelingene (~1 min)
+cd ..
 python lag_v4_data.py                  # Genererer ordninger_v4.js (~10 sek)
+python ci/kontroller_v4.py             # Sjekker at filen ser sunn ut
 
 git add ordninger_v4.js
 git commit -m "Oppdater data"

@@ -414,6 +414,10 @@ def bygg_nfi_rader() -> list[dict]:
 
     df["_gruppe"] = df.apply(get_gruppe, axis=1)
 
+    # «Øvrige Ukjent» er tildelinger uten både ordning og område - vi kan ikke si
+    # noe meningsfullt om dem, og de har ingen søknadsside å peke på.
+    df = df[df["_gruppe"] != "Øvrige Ukjent"]
+
     rader = []
     for gruppe_navn, sub in df.groupby("_gruppe"):
         siste_aar = int(sub["aar"].max())
@@ -445,9 +449,15 @@ def bygg_nfi_rader() -> list[dict]:
         meta = nfi_meta.get(gruppe_navn.strip().lower())
         frister = [_norsk_til_iso(f) for f in (meta.get("soknadsfrister") or [])] if meta else []
 
+        # «Øvrige <område>» er ikke ordninger man kan søke på, men samleposter for
+        # tildelinger vi ikke klarte å knytte til en navngitt ordning. De har
+        # verken søknadsside eller frist, så tittelen må si hva de faktisk er.
+        tittel = (f"Øvrige tildelinger – {gruppe_navn[len('Øvrige '):]} (samlepost, ikke en søkbar ordning)"
+                  if gruppe_navn.startswith("Øvrige ") else gruppe_navn)
+
         rader.append({
             "id": nfi_id,
-            "tittel": gruppe_navn,
+            "tittel": tittel,
             "beskrivelse": meta.get("ingress") if meta else None,
             "forvalter": "Norsk filminstitutt",
             "forvalter_kort": "NFI",
@@ -544,6 +554,71 @@ def bygg_nfi_rader() -> list[dict]:
         print(f"La til {nye} NFI-ordninger uten tildelingshistorikk (kun metadata/frister)")
 
     return rader
+
+
+# Innhold som trygt kan hentes fra dubletten: beskrivende felt og lenker, der
+# de to kildene sier det samme om samme ordning. Statistikkfeltene (grad,
+# soknader, total_tildelt ...) slås bevisst IKKE sammen - de er regnet på ulike
+# perioder, og å blande dem ville gitt tall som ikke stemmer med noen av kildene.
+FLETTBARE_FELT = (
+    "beskrivelse", "formaal", "hvem", "hva", "kriterier",
+    "rapportering", "hvordan", "soknadslenke", "regelverk",
+)
+
+
+def slaa_sammen_dubletter(rader: list[dict]) -> list[dict]:
+    """Slå sammen ordninger som finnes både på tilskudd.no og hos Kulturdirektoratet.
+
+    Sju ordninger (bl.a. «Historiske spel» og amatørteater-ordningene) rapporteres
+    både som DT-xxxx og som KUL-kode. Radene får ulik innvilgelsesgrad fordi tallene
+    er regnet på ulike perioder - DT-tallene gjelder siste rapporterte budsjettår,
+    KUL-tallene hele 2021-2026 - og brukeren ser da samme ordning to ganger med
+    motstridende tall.
+
+    Vi beholder DT-raden, siden statistikken der er beregnet likt som for de øvrige
+    150 DT-ordningene. Men frister og innhold flettes inn fra KUL-raden: for
+    «Amatørteateraktivitet i grupper» og «Driftstilskudd til organisasjoner for
+    nasjonale minoriteter» er tilskudd.no-fristen utdatert, mens skrapingen fra
+    kulturdirektoratet.no har den gjeldende. Uten flettingen ville
+    dublettfjerningen tatt bort en levende søknadsfrist.
+    """
+    per_tittel = defaultdict(list)
+    for r in rader:
+        per_tittel[r["tittel"].strip().lower()].append(r)
+
+    fjernede_ider = set()
+    logg = []
+    for gruppe in per_tittel.values():
+        if len(gruppe) < 2:
+            continue
+        dt = next((r for r in gruppe if r["id"].startswith("DT-")), None)
+        if dt is None:
+            continue
+        for annen in gruppe:
+            if annen is dt:
+                continue
+            nye_frister = sorted(set(dt["frister"] or []) | set(annen["frister"] or []))
+            fikk_frist = set(nye_frister) - set(dt["frister"] or [])
+            dt["frister"] = nye_frister
+            if nye_frister:
+                dt["frist"] = nye_frister[0]
+            fylt = [f for f in FLETTBARE_FELT if not dt.get(f) and annen.get(f)]
+            for f in fylt:
+                dt[f] = annen[f]
+            fjernede_ider.add(id(annen))
+            logg.append((annen["id"], annen["tittel"], dt["id"], sorted(fikk_frist), fylt))
+
+    if logg:
+        print(f"\nSlo sammen {len(logg)} dubletter med DT-ordningen som hovedrad:")
+        for oid, tittel, dt_id, frister, fylt in logg:
+            detalj = []
+            if frister:
+                detalj.append(f"frister {', '.join(frister)}")
+            if fylt:
+                detalj.append(f"felt {', '.join(fylt)}")
+            print(f"  {oid:<10} -> {dt_id:<10} {tittel[:45]}"
+                  + (f"  (hentet {'; '.join(detalj)})" if detalj else ""))
+    return [r for r in rader if id(r) not in fjernede_ider]
 
 
 def lag_v4_data():
@@ -678,6 +753,8 @@ def lag_v4_data():
 
     # NFI-ordninger (Norsk filminstitutt) - egen kilde, ikke i ordninger_utvidet.json
     rader.extend(bygg_nfi_rader())
+
+    rader = slaa_sammen_dubletter(rader)
 
     # Skriv ut
     ut = Path("ordninger_v4.js")
