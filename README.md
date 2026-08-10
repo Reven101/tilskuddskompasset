@@ -120,14 +120,26 @@ bygger `ordninger_v4.js`, kontrollerer at den er sunn
 Vercel deployer som vanlig. Går kontrollen ikke gjennom, publiseres
 ingenting — nettsiden beholder forrige versjon.
 
-De halvårlige, manuelt bygde filene (NKF/FLB-CSV-ene, NFI-filene og
-`tildelinger_samlet_2021_2026.csv`) er for store for git og ligger bare
-på din maskin. Workflowen henter dem derfor fra en GitHub-release:
+De halvårlige, manuelt bygde filene er for store for git og ligger bare på din
+maskin. Workflowen henter dem derfor fra en GitHub-release.
+
+Releasen skal kun inneholde de seks filene workflowen faktisk trenger — resten av
+`tilskudd_data/` regenereres av skrapestegene i hver kjøring, eller brukes ikke av
+nettsiden. Hele mappa er 1,2 GB; disse seks er 61 MB:
+
+| Fil | Hvem trenger den |
+|-----|------------------|
+| `nkf_flb_organisasjoner_2021_2026_alle_status.csv` | `slaa_sammen_hoveddatasett.py` |
+| `nkf_flb_organisasjoner_2021_2026.csv` | `lag_v4_data.py` (mottakere/beløp for NKF/FLB) |
+| `nkf_flb_innvilgelsesgrad_per_ordning.csv` | `lag_v4_data.py` (innvilgelsesgrad) |
+| `brreg_lookup.csv` | `slaa_sammen_hoveddatasett.py` (sektorkode) |
+| `nfi_tildelinger_2020_juni2026.xlsx` | `lag_v4_data.py` (NFI-tildelinger) |
+| `nfi_ordninger.json` | `lag_v4_data.py` (NFI-frister og metadata) |
 
 **Førstegangsoppsett (én gang):**
 
-1. Pakk innholdet i `tilskudd_data/` til en zip:
-   `cd tilskudd_data && zip -r ../tilskudd_data.zip *.csv *.json *.xlsx`
+1. Bygg zip-en fra repo-roten:
+   `python lag_datagrunnlag_zip.py`
 2. På GitHub: Releases → «Draft a new release» → tag `data-grunnlag` →
    dra `tilskudd_data.zip` inn som vedlegg → «Publish release»
 3. Actions-fanen → «Oppdater tilskuddsdata» → «Run workflow» — sjekk at
@@ -137,6 +149,10 @@ på din maskin. Workflowen henter dem derfor fra en GitHub-release:
 bygg ny zip (punkt 1) og last den opp på nytt på `data-grunnlag`-releasen
 (slett det gamle vedlegget først). Selve cron-kjøringen krever at
 workflow-filen ligger på main-grenen.
+
+Filnavnene med årstall (`nfi_tildelinger_2020_juni2026.xlsx`) er hardkodet i
+`lag_v4_data.py`. Endrer navnet seg ved neste NFI-nedlasting, må både scriptet og
+`lag_datagrunnlag_zip.py` oppdateres — ellers hopper byggingen stille over NFI.
 
 ---
 
