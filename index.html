@@ -190,7 +190,7 @@ footer .mono{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spaci
 
 <header>
   <div class="kompass-ikon" aria-hidden="true"></div>
-  <p class="eyebrow">Statlige tilskudd samlet</p>
+  <p class="eyebrow">Tilskudd til frivillige organisasjoner – samlet</p>
   <h1>Tilskudds&shy;kompasset</h1>
   <p class="pitch">Finn ordningene dere kan søke, <strong>se hvem som faktisk har fått, og hvor mye de fikk</strong>.</p>
 </header>
@@ -744,7 +744,12 @@ function tabSok(o,frist){
   if(o.regelverk)h+=`<a class="knapp sekundaer" href="${escAttr(o.regelverk)}" target="_blank" rel="noopener">Regelverk</a>`;
   if((o.id||"").startsWith("DT-"))h+=`<a class="knapp sekundaer" href="https://tilskudd.lottstift.no/ordning/${o.id}" target="_blank" rel="noopener">tilskudd.no →</a>`;
   h+='</div>';
-  h+=`<p class="kilde-note">Kilde for denne ordningen: ${kildeNavn(o)}</p>`;
+  // Forvalteren er ikke alltid staten - fylkeskommuner, stiftelser og
+  // frivilligheten selv forvalter en del av ordningene - og spillemidler er
+  // Norsk Tippings overskudd, ikke statsbudsjettet. Vis begge deler konkret
+  // her framfor å påstå noe generelt om «statlige tilskudd».
+  const fin=o.finansiering?` · Finansiering: ${escHTML(o.finansiering.toLowerCase())}`:"";
+  h+=`<p class="kilde-note">Forvaltes av ${escHTML(o.forvalter||"–")}${fin} · Kilde: ${kildeNavn(o)}</p>`;
   return h;
 }
 

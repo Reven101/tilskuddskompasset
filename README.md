@@ -1,6 +1,8 @@
 # Tilskuddskompasset
 
-Finn statlige tilskuddsordninger for frivillige organisasjoner – se hvem som har fått, hvor mye de fikk, og rekk fristen.
+Finn tilskuddsordninger for frivillige organisasjoner – se hvem som har fått, hvor mye de fikk, og rekk fristen.
+
+De fleste ordningene er statlige, men registeret omfatter også regionale kulturfond forvaltet av fylkeskommunene, ordninger frivilligheten forvalter selv på delegasjon (Frifond, LAM) og noen forvaltet av stiftelser. Finansieringen er dels statsbudsjettet, dels spillemidler.
 
 Bygget på åpne data fra [tilskudd.no](https://tilskudd.lottstift.no) (Lotteri- og stiftelsestilsynet), [kulturdirektoratet.no](https://www.kulturdirektoratet.no) og [nfi.no](https://www.nfi.no).
 
