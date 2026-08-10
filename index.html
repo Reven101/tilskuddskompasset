@@ -81,8 +81,10 @@ select{font-family:'IBM Plex Mono',monospace;font-size:.74rem;padding:6px 11px;b
 .badge.frist{border-color:var(--ink);background:var(--mustard);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-weight:500}
 .badge.frist.akutt{background:var(--rose);color:var(--ink);border-color:var(--ink)}
 .badge.frist.lopende{background:transparent;border-color:var(--mustard);color:#8A6A1F}
+.badge.frist.utloept{background:transparent;border-color:var(--line);color:#6B756D;text-transform:none;letter-spacing:.02em}
 .badge.frivillig{border-color:var(--line);color:#6B756D;font-size:.54rem}
 .badge.konkurranse{border-color:var(--rose);color:#9C5048;font-size:.54rem}
+.kilde-note{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#8A9089;margin-top:10px}
 
 .maaler{width:86px;text-align:center;flex-shrink:0}
 .maaler svg{display:block;margin:0 auto}
@@ -226,7 +228,7 @@ footer .mono{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spaci
         <option value="alle">Alle frister</option>
         <option value="30">Frist innen 30 dager</option>
         <option value="90">Frist innen 90 dager</option>
-        <option value="lopende">Løpende frist</option>
+        <option value="lopende">Uten fast frist</option>
       </select>
       <select id="fylkeVelger" aria-label="Filtrer på fylke"><option value="alle">Alle fylker</option></select>
     </div>
@@ -272,7 +274,12 @@ const fmtKort=n=>{if(n==null)return"–";if(n>=1e6)return(n/1e6).toFixed(1).repl
 const escHTML=s=>s?s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"):"";
 const escAttr=s=>s?s.replace(/&/g,"&amp;").replace(/"/g,"&quot;"):"";
 const trunkert=(s,m)=>{if(!s)return"";return s.length<=m?s:s.slice(0,m).replace(/\s\S*$/,"")+" …";};
-const kildeNavn=o=>(o.id||"").startsWith("DT-")?"tilskudd.no":"kulturdirektoratet.no";
+const kildeNavn=o=>{
+  const id=o.id||"";
+  if(id.startsWith("DT-"))return"tilskudd.no";
+  if(id.startsWith("NFI-"))return"nfi.no";
+  return"kulturdirektoratet.no";
+};
 
 function parseFrist(f){if(!f)return null;const d=new Date(f+"T00:00:00");return isNaN(d)?null:d;}
 function nesteFrist(frister){
@@ -280,7 +287,30 @@ function nesteFrist(frister){
   const naa=new Date();naa.setHours(0,0,0,0);
   return frister.map(parseFrist).filter(d=>d&&d>=naa).sort((a,b)=>a-b)[0]||null;
 }
+// Siste frist som allerede er passert - brukes til å vise ordninger mellom to
+// søknadsrunder i stedet for å skjule dem (se nyligUtloept).
+function forrigeFrist(frister){
+  if(!frister||!frister.length)return null;
+  const naa=new Date();naa.setHours(0,0,0,0);
+  return frister.map(parseFrist).filter(d=>d&&d<naa).sort((a,b)=>b-a)[0]||null;
+}
 const dagerTil=d=>{const n=new Date();n.setHours(0,0,0,0);return Math.round((d-n)/864e5);};
+
+// tilskudd.no oppgir deadlineType som DEADLINE / NO_DEADLINE / UNKNOWN (eller
+// mangler helt). NO_DEADLINE betyr at ingen frist er registrert - ikke
+// nødvendigvis at ordningen er løpende - så teksten holder seg til det kilden
+// faktisk sier. CONTINUOUS er med for å tåle eldre datafiler.
+const utenFrist=o=>o.fristtype==="NO_DEADLINE"||o.fristtype==="CONTINUOUS";
+
+// Ordninger som gikk ut for under et år siden er nesten alltid årlig
+// gjentakende. Å skjule dem mellom to runder gjør at halve databasen forsvinner
+// akkurat når folk planlegger neste søknad, så vi viser dem med tydelig merking.
+const UTLOEPT_VINDU_DAGER=365;
+function nyligUtloept(o){
+  if(nesteFrist(o.frister))return null;
+  const d=forrigeFrist(o.frister);
+  return d&&dagerTil(d)>=-UTLOEPT_VINDU_DAGER?d:null;
+}
 
 // ===== KOMPASSNÅL =====
 function maalerSVG(grad){
@@ -360,7 +390,7 @@ let valgtType="alle",valgtDep="alle",valgtFrist="alle",valgtFylke="alle",sorteri
 let kunApne=true;
 
 function erApen(o){
-  return o.fristtype==="CONTINUOUS"||nesteFrist(o.frister)!=null;
+  return utenFrist(o)||nesteFrist(o.frister)!=null||nyligUtloept(o)!=null;
 }
 let valgtFagfelt=new Set(),valgtOrgform=new Set(),valgtHva=new Set(),valgtBelop=null;
 
@@ -532,7 +562,7 @@ function render(){
     if(valgtDep!=="alle"&&o.dep!==valgtDep)return false;
     if(valgtFylke!=="alle"&&(!o.fylker||!o.fylker[valgtFylke]))return false;
     if(valgtFrist!=="alle"){
-      if(valgtFrist==="lopende"){if(o.fristtype!=="CONTINUOUS")return false;}
+      if(valgtFrist==="lopende"){if(!utenFrist(o))return false;}
       else{const d=nesteFrist(o.frister);if(!d||dagerTil(d)>parseInt(valgtFrist))return false;}
     }
     if(q&&!ordgrenseMatch(haystack(o),q))return false;
@@ -598,8 +628,13 @@ function render(){
 function lagTopp(o,frist){
   let fristBadge="";
   if(frist){const dg=dagerTil(frist);fristBadge=`<span class="badge frist ${dg<=14?"akutt":""}">Frist ${frist.getDate()}. ${MND[frist.getMonth()+1]} · ${dg<=0?"i dag":"om "+dg+" d"}</span>`;}
-  else if(o.fristtype==="CONTINUOUS")fristBadge='<span class="badge frist lopende">Løpende</span>';
-  else fristBadge='<span class="badge">Frist: se ordningen</span>';
+  else if(utenFrist(o))fristBadge='<span class="badge frist lopende">Ingen fast frist</span>';
+  else{
+    const utl=nyligUtloept(o);
+    fristBadge=utl
+      ?`<span class="badge frist utloept">Fristen gikk ut ${utl.getDate()}. ${MND[utl.getMonth()+1]} ${utl.getFullYear()} · ny runde ikke kunngjort</span>`
+      :'<span class="badge">Frist: se ordningen</span>';
+  }
 
   const typeBadges=(o.typer||[]).map(t=>`<span class="badge">${t}</span>`).join("");
 
@@ -681,7 +716,11 @@ function tabTall(o){
 function tabSok(o,frist){
   let h="";
   if(frist){const dg=dagerTil(frist);h+=`<p class="felt-tekst" style="font-size:1rem">Neste frist: <strong>${frist.getDate()}. ${MND_FULL[frist.getMonth()+1]} ${frist.getFullYear()}</strong> – om ${dg} dager.</p>`;}
-  else if(o.fristtype==="CONTINUOUS")h+='<p class="felt-tekst" style="font-size:1rem"><strong>Løpende søknadsfrist</strong>.</p>';
+  else if(utenFrist(o))h+=`<p class="felt-tekst" style="font-size:1rem"><strong>Ingen søknadsfrist er oppgitt</strong> på ${kildeNavn(o)}. Sjekk ordningssiden – mange slike ordninger tar imot søknader løpende.</p>`;
+  else{
+    const utl=nyligUtloept(o);
+    if(utl)h+=`<p class="felt-tekst" style="font-size:1rem">Siste kjente frist var <strong>${utl.getDate()}. ${MND_FULL[utl.getMonth()+1]} ${utl.getFullYear()}</strong>, og den er passert. Ordningen er som regel årlig, men neste frist er ikke kunngjort i dataene våre – sjekk ordningssiden.</p>`;
+  }
   if(o.frister&&o.frister.length>1){
     h+='<span class="felt-tittel">Alle frister</span><p class="felt-tekst">';
     h+=o.frister.map(f=>{const d=parseFrist(f);return d?`${d.getDate()}. ${MND_FULL[d.getMonth()+1]} ${d.getFullYear()}`:f;}).join(", ")+'</p>';
@@ -699,6 +738,7 @@ function tabSok(o,frist){
   if(o.regelverk)h+=`<a class="knapp sekundaer" href="${escAttr(o.regelverk)}" target="_blank" rel="noopener">Regelverk</a>`;
   if((o.id||"").startsWith("DT-"))h+=`<a class="knapp sekundaer" href="https://tilskudd.lottstift.no/ordning/${o.id}" target="_blank" rel="noopener">tilskudd.no →</a>`;
   h+='</div>';
+  h+=`<p class="kilde-note">Kilde for denne ordningen: ${kildeNavn(o)}</p>`;
   return h;
 }
 
