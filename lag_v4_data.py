@@ -21,9 +21,16 @@ from pathlib import Path
 
 import pandas as pd
 
+# Rader med budsjettår etter inneværende år er ubehandlede søknader, ikke
+# tildelinger, og skal ikke telle med i statistikken. Grensen MÅ følge klokka:
+# står den som et fast årstall, filtreres alt bort som fremtidig fra 1. januar
+# året etter, og siden viser det samme «siste året» i det uendelige uten at
+# antall ordninger endrer seg - altså uten at noen kontroll slår ut.
+SISTE_BUDSJETTAAR = date.today().year
+
 
 def les_tildelinger() -> list[dict]:
-    """Les samlet tildelingsfil (tilskudd.no + NKF/FLB). Filtrerer bort budsjettår > 2026."""
+    """Les samlet tildelingsfil (tilskudd.no + NKF/FLB). Filtrerer bort fremtidige budsjettår."""
     fil = Path("tilskudd_data/tildelinger_samlet_2021_2026.csv")
     if not fil.exists():
         print("FEIL: tildelinger_samlet_2021_2026.csv finnes ikke!")
@@ -37,9 +44,9 @@ def les_tildelinger() -> list[dict]:
             aar = float(r.get("budsjettar") or 0)
         except (ValueError, TypeError):
             aar = 0
-        if aar <= 2026:
+        if aar <= SISTE_BUDSJETTAAR:
             filtrert.append(r)
-    print(f"  Filtrert bort {len(rader) - len(filtrert)} rader med budsjettår > 2026")
+    print(f"  Filtrert bort {len(rader) - len(filtrert)} rader med budsjettår > {SISTE_BUDSJETTAAR}")
     return filtrert
 
 
@@ -196,7 +203,7 @@ def bygg_nkf_flb_rader() -> list[dict]:
     inn = pd.read_csv(innvilget_fil, sep=";", encoding="utf-8-sig", low_memory=False)
     inn["budsjettar"] = pd.to_numeric(inn["budsjettar"], errors="coerce")
     # Filtrer bort fremtidige år (ubehandlede søknader)
-    inn = inn[inn["budsjettar"] <= 2026]
+    inn = inn[inn["budsjettar"] <= SISTE_BUDSJETTAAR]
 
     rader = []
     for _, g in grad_df.iterrows():
@@ -387,17 +394,28 @@ def bygg_nfi_rader() -> list[dict]:
     nfi_ordninger.json (bygget av hent_nfi_ordninger.py).
     Ingen avslagsdata → ingen innvilgelsesgrad.
     """
-    excel_fil = Path("tilskudd_data/nfi_tildelinger_2020_juni2026.xlsx")
+    # Filnavnet bærer datoen for nedlastingen (nfi_tildelinger_2020_juni2026.xlsx),
+    # og bytter dermed navn hver halvårlige runde. Med et fast navn ville
+    # byggingen bare skrevet «Hopper over NFI» og fortsatt uten alle
+    # NFI-ordningene - et tap på ~60 ordninger som CI-vakten ikke ville reagert
+    # på, siden totalen fortsatt lå over minstegrensen. Derfor: velg nyeste fil
+    # som matcher mønsteret, og stopp hvis ingen finnes.
+    kandidater = sorted(Path("tilskudd_data").glob("nfi_tildelinger_*.xlsx"),
+                        key=lambda p: p.stat().st_mtime)
+    if not kandidater:
+        print("FEIL: fant ingen tilskudd_data/nfi_tildelinger_*.xlsx - "
+              "kjør hent_nfi_tildelinger.py, eller sjekk at releasen inneholder filen.")
+        raise SystemExit(1)
+    excel_fil = kandidater[-1]
+    if len(kandidater) > 1:
+        print(f"  (fant {len(kandidater)} NFI-filer, bruker nyeste: {excel_fil.name})")
     ordninger_fil = Path("tilskudd_data/nfi_ordninger.json")
-    if not excel_fil.exists():
-        print("Hopper over NFI: nfi_tildelinger_2020_juni2026.xlsx ikke funnet")
-        return []
 
     df = pd.read_excel(excel_fil, sheet_name="nfi_tildelinger")
     # Kun positive tildelinger (tildelt_kr er alltid positiv; tildelt_raa kan ha korreksjoner)
     df = df[df["tildelt_kr"].notna() & (df["tildelt_kr"] > 0)].copy()
     df["aar"] = pd.to_numeric(df["aar"], errors="coerce")
-    df = df[df["aar"].notna() & (df["aar"] <= 2026)].copy()
+    df = df[df["aar"].notna() & (df["aar"] <= SISTE_BUDSJETTAAR)].copy()
 
     # Ordningsmetadata fra nfi_ordninger.json (hent_nfi_ordninger.py)
     nfi_meta = {}

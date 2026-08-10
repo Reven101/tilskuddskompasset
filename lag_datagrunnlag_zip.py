@@ -38,9 +38,13 @@ PAAKREVDE = {
     "nkf_flb_organisasjoner_2021_2026.csv": "lag_v4_data.py (mottakere/beløp)",
     "nkf_flb_innvilgelsesgrad_per_ordning.csv": "lag_v4_data.py (innvilgelsesgrad)",
     "brreg_lookup.csv": "slaa_sammen_hoveddatasett.py (sektorkode)",
-    "nfi_tildelinger_2020_juni2026.xlsx": "lag_v4_data.py (NFI-tildelinger)",
     "nfi_ordninger.json": "lag_v4_data.py (NFI-frister)",
 }
+
+# NFI-tildelingsfila har nedlastingsdatoen i navnet og heter noe nytt hver
+# halvårlige runde, så den kan ikke listes med fast navn. Samme mønster som
+# lag_v4_data.py bruker: nyeste treff vinner.
+NFI_MOENSTER = "nfi_tildelinger_*.xlsx"
 
 
 def main() -> int:
@@ -49,6 +53,11 @@ def main() -> int:
         return 1
 
     mangler = [(f, bruker) for f, bruker in PAAKREVDE.items() if not (KILDE / f).exists()]
+
+    nfi = sorted(KILDE.glob(NFI_MOENSTER), key=lambda p: p.stat().st_mtime)
+    if not nfi:
+        mangler.append((NFI_MOENSTER, "lag_v4_data.py (NFI-tildelinger)"))
+
     if mangler:
         print(f"✗ {len(mangler)} påkrevde filer mangler i {KILDE}/:")
         for f, bruker in mangler:
@@ -56,13 +65,14 @@ def main() -> int:
         print("\nKjør den halvårlige NKF/FLB- eller NFI-rutinen i README før du bygger zip-en.")
         return 1
 
+    filer = list(PAAKREVDE) + [nfi[-1].name]
     with zipfile.ZipFile(UT, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
-        for f in PAAKREVDE:
+        for f in filer:
             sti = KILDE / f
             print(f"  pakker {f} ({sti.stat().st_size / 1024 / 1024:.1f} MB) …")
             z.write(sti, arcname=f)  # flat zip - workflowen pakker ut i tilskudd_data/
 
-    raa = sum((KILDE / f).stat().st_size for f in PAAKREVDE)
+    raa = sum((KILDE / f).stat().st_size for f in filer)
     pakket = UT.stat().st_size
     print(f"\n✓ {UT}: {pakket / 1024 / 1024:.1f} MB "
           f"({raa / 1024 / 1024:.0f} MB rå, {100 - pakket / raa * 100:.0f} % komprimert)")
