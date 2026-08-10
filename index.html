@@ -457,16 +457,25 @@ const BELOP_GRUPPER={
   "Over 1 mill":v=>v!=null&&v>1000000,
 };
 
+// «hva» er hva pengene kan brukes til, og det er nettopp det folk søker etter:
+// 24 ordninger nevner «utstyr» bare der, 15 «honorar», 5 «instrumenter».
+// kriterier/rapportering/hvordan holdes utenfor med vilje - de er standardtekst
+// om revisor, regnskap og frister, og ville druknet treffene i støy.
+// Merk at søket ikke ser forskjell på «dekker X» og «dekker ikke X»: et søk på
+// «noter» treffer Instrumentfondet, som eksplisitt ikke dekker noter.
 function haystack(o){
-  return(o.tittel+" "+o.forvalter+" "+(o.beskrivelse||"")+" "+(o.hvem||"")+" "+(o.formaal||"")+" "+(o.dep||"")+" "+(o.topp_mottakere||[]).map(m=>m.n+" "+m.tiltak).join(" ")).toLowerCase();
+  return(o.tittel+" "+o.forvalter+" "+(o.beskrivelse||"")+" "+(o.hvem||"")+" "+(o.formaal||"")+" "+(o.hva||"")+" "+(o.dep||"")+" "+(o.topp_mottakere||[]).map(m=>m.n+" "+m.tiltak).join(" ")).toLowerCase();
 }
 function ordgrenseMatch(tekst,q){
   if(q.length>=4) return tekst.includes(q);
   const re=new RegExp("(^|[\\s,;:.!?/()\\-])" + q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "([\\s,;:.!?/()\\-]|$)");
   return re.test(tekst);
 }
+// Formål-chipsene leter etter ord som «utstyr», «instrument» og «innkjøp» -
+// altså nettopp innholdet i «hva». Uten feltet traff «Utstyr» 35 ordninger; med
+// det treffer den 63.
 function haystackVeiviser(o){
-  return(o.tittel+" "+o.forvalter+" "+(o.beskrivelse||"")+" "+(o.hvem||"")+" "+(o.formaal||"")+" "+(o.topp_mottakere||[]).map(m=>m.n+" "+m.tiltak).join(" ")).toLowerCase();
+  return(o.tittel+" "+o.forvalter+" "+(o.beskrivelse||"")+" "+(o.hvem||"")+" "+(o.formaal||"")+" "+(o.hva||"")+" "+(o.topp_mottakere||[]).map(m=>m.n+" "+m.tiltak).join(" ")).toLowerCase();
 }
 
 function matcherVeiviser(o){
