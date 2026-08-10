@@ -40,6 +40,13 @@ MINST_MED_MOTTAKERE = 250
 # på ukjente verdier i stedet for stille feil.
 KJENTE_FRISTTYPER = {None, "DEADLINE", "NO_DEADLINE", "UNKNOWN", "CONTINUOUS"}
 
+# En hel datakilde kan falle ut uten at totalen kryper under MINST_ORDNINGER:
+# mister vi alle NFI-ordningene, står vi igjen med ~250 og slipper gjennom.
+# Derfor et gulv per kilde. Tallene er satt godt under dagens nivå (per august
+# 2026: DT 162, NKF 48, NFI 61, KUL 16, FLB 15, KD 11) - de skal fange
+# bortfall, ikke normal variasjon.
+MINST_PER_KILDE = {"DT": 120, "NKF": 35, "NFI": 40, "FLB": 10}
+
 
 def main() -> int:
     if not FIL.exists():
@@ -73,6 +80,15 @@ def main() -> int:
         mangler = sum(1 for o in ordninger if not o.get(felt))
         if mangler:
             print(f"✗ {mangler} ordninger mangler feltet «{felt}»")
+            return 1
+
+    per_kilde: dict[str, int] = {}
+    for o in ordninger:
+        per_kilde[str(o["id"]).split("-")[0]] = per_kilde.get(str(o["id"]).split("-")[0], 0) + 1
+    for kilde, minst in MINST_PER_KILDE.items():
+        if per_kilde.get(kilde, 0) < minst:
+            print(f"✗ bare {per_kilde.get(kilde, 0)} {kilde}-ordninger (venter minst {minst}) — "
+                  "falt en hel datakilde ut av byggingen?")
             return 1
 
     ukjente = {o.get("fristtype") for o in ordninger} - KJENTE_FRISTTYPER
