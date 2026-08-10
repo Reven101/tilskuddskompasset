@@ -92,6 +92,7 @@ def aggreger_per_ordning(tildelinger: list[dict]) -> dict:
         "icnpo": defaultdict(int),  # teller forekomster per ICNPO-kategori
         "type_tilskudd": defaultdict(int),  # teller forekomster per type
         "sektorer": defaultdict(int),  # teller forekomster per mottaker-sektor
+        "finansiering": defaultdict(int),  # Statsbudsjettet / Spillemidler
     })
 
     for r in tildelinger:
@@ -147,6 +148,15 @@ def aggreger_per_ordning(tildelinger: list[dict]) -> dict:
             gruppe = SEKTOR_TIL_GRUPPE.get(sektor)
             if gruppe:
                 o["sektorer"][gruppe] += 1
+
+        # Finansieringskilde: spillemidler er Norsk Tippings overskudd, ikke
+        # statsbudsjettet. Skillet er ikke akademisk - flere av ordningene
+        # forvaltes dessuten av fylkeskommuner, stiftelser eller frivilligheten
+        # selv, så «statlig tilskudd» er en upresis samlebetegnelse. Vi viser
+        # kilden per ordning i stedet for å påstå noe generelt.
+        fin = (r.get("finansieringskilder") or "").strip()
+        if fin:
+            o["finansiering"][fin] += 1
 
     return ordninger
 
@@ -324,6 +334,10 @@ def bygg_nkf_flb_rader() -> list[dict]:
             "avkorting": avkorting_nkf,
             "icnpo": ["Kunst og kultur"],
             "orgform": orgform_nkf,
+            # Samme regel som slaa_sammen_hoveddatasett.py: forvalternavnet
+            # skiller spillemiddel-ordningene fra de statsbudsjettfinansierte.
+            "finansiering": ("Spillemidler" if "Spillemidler" in str(g["tilskuddsforvalter"])
+                             else "Statsbudsjettet"),
         })
 
     med_innhold = sum(1 for r in rader if r["formaal"])
@@ -363,7 +377,7 @@ def bygg_nkf_flb_rader() -> list[dict]:
             "hvordan": d.get("hvordan") or None,
             "soknadslenke": d["url"],
             "regelverk": d.get("regelverk") or None,
-            "topp_mottakere": [], "fylker": {}, "fordeling": None, "konkurranse": None, "avkorting": None, "icnpo": ["Kunst og kultur"], "orgform": [],
+            "topp_mottakere": [], "fylker": {}, "fordeling": None, "konkurranse": None, "avkorting": None, "icnpo": ["Kunst og kultur"], "orgform": [], "finansiering": None,
         })
         nye += 1
     print(f"La til {nye} ordninger uten tildelingshistorikk ennå (kun innhold/frist fra kulturdirektoratet.no)")
@@ -544,6 +558,7 @@ def bygg_nfi_rader() -> list[dict]:
             "avkorting": None,
             "icnpo": ["Kunst og kultur"],
             "orgform": ["Privat virksomhet"],
+            "finansiering": "Statsbudsjettet",  # NFI bevilges over KUDs budsjett
         })
 
     med_meta = sum(1 for r in rader if r["beskrivelse"])
@@ -602,6 +617,7 @@ def bygg_nfi_rader() -> list[dict]:
             "avkorting": None,
             "icnpo": ["Kunst og kultur"],
             "orgform": ["Privat virksomhet"],
+            "finansiering": "Statsbudsjettet",  # NFI bevilges over KUDs budsjett
         })
         nye += 1
 
@@ -747,6 +763,11 @@ def lag_v4_data():
         if agg and agg["icnpo"]:
             icnpo_list = [k for k, _ in sorted(agg["icnpo"].items(), key=lambda x: -x[1])[:3]]
 
+        # Finansieringskilde: den dominerende i tildelingshistorikken
+        finansiering = None
+        if agg and agg["finansiering"]:
+            finansiering = max(agg["finansiering"].items(), key=lambda x: x[1])[0]
+
         # Orgform: hvilke organisasjonstyper mottar tilskudd (fra mottakerkategorier + sektorer)
         orgform_set = set()
         for kat in o.get("mottakerkategorier", []):
@@ -801,6 +822,7 @@ def lag_v4_data():
             "avkorting": avkorting,
             "icnpo": icnpo_list,
             "orgform": orgform,
+            "finansiering": finansiering,
         })
 
     # NKF/FLB-ordninger (Kulturråd/Fond for lyd og bilde) - egen kilde, ikke i ordninger_utvidet.json
