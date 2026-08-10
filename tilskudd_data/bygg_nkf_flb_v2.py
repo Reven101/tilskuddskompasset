@@ -118,8 +118,10 @@ df24_h = pd.DataFrame({
     "tilskuddsforvalter": df24["hovedfinansieringskilde"],
     "ansvarlig_departement": "Kultur- og likestillingsdepartementet",
     "tilskudds_id": df24["ordning_kode"],
+    # Vises som tittel på nettsiden, så teksten må lese som noe en søker forstår:
+    # ordningen finnes, vi mangler bare navnet på den.
     "tilskuddsordning": df24["ordning_kode"].map(kode_til_navn).fillna(
-        "Uidentifisert ordning (" + df24["hovedfinansieringskilde"] + ", kode " + df24["ordning_kode"] + ")"
+        "Ikke navngitt ordning hos " + df24["hovedfinansieringskilde"] + " (kode " + df24["ordning_kode"] + ")"
     ),
     "budsjettar": df24["bevilgningsaar"],
     "status": df24["soknad_vedtak"],
