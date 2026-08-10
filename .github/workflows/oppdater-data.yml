@@ -67,6 +67,14 @@ jobs:
       - name: Skrap frister og formål fra kulturdirektoratet.no
         run: python hent_kulturdirektoratet_innhold.py
 
+      # Uten dette steget bygger lag_v4_data.py på den frosne
+      # tildelinger_samlet_2021_2026.csv fra releasen, og de ferske tildelingene
+      # fra hent_bulk_tildelinger.py havner aldri på nettsiden. Scriptet bruker
+      # relative filstier, så det må kjøres fra tilskudd_data/.
+      - name: Slå ferske tildelinger sammen med NKF/FLB-grunnlaget
+        working-directory: tilskudd_data
+        run: python slaa_sammen_hoveddatasett.py
+
       - name: Bygg ordninger_v4.js
         run: python lag_v4_data.py
 
